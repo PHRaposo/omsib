@@ -1,5 +1,5 @@
 # OMSIB LIBRARY
 
-Export score from OpenMusic to Avid Sibelius Software.
+Export scores from OpenMusic to Avid Sibelius Software.
 
 
