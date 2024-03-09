@@ -364,7 +364,6 @@ and the line style accepted by Sibelius Manuscript Language."
           (progn 
           (setf *voice-num* (incf *voice-num*))
           (setf rep (append rep (cons-sib-text staff (nth i instruments) (nth i articulations-lines))))))
-   (setf *score-number-of-measures* nil)
    
    (om::save-data (mapcar #'list (om::flat rep)))))
 
@@ -460,8 +459,10 @@ and the line style accepted by Sibelius Manuscript Language."
 			(setf rep (append rep (format-lines *voice-note-positions* lin)))
             (setf lastmes mes))
       ))
- (progn (setf *score-number-of-measures* nil)
-              rep)))
+ (if *score-number-of-measures*
+	 (progn (setf *score-number-of-measures* nil)
+             rep)
+	 rep)))
 
 ;symb-beat-val= For a key signature equivalent to 3//3 will be the half note (blanche)
 ;real-beat-val= For the same key sign, this will be the halfnote of a triplet (blanche de triolet)
