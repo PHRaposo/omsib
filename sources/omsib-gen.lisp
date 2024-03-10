@@ -160,9 +160,40 @@ and the instrument type accepted by Sibelius Manuscript Language."
 The input argument can be a single list with two elements (strings), instrument longname and instrument shortname, or
 a list of list with these two arguments."
 (if (and (listp list) (every #'atom list))
-   (om::x-append (get-sib-instrument (first list)) (first list) (second list))
-   (loop for el in list collect (om::x-append (get-sib-instrument (first el)) (first el) (second el)))))
+    (let ((instid (get-sib-instrument (first list))))
+   (om::x-append instid (instid-to-longname (first list)) (second list)))
+   (loop for el in list
+            collect  (let ((instid (get-sib-instrument (first el))))
+                         (om::x-append instid (instid-to-longname (first el)) (second el))))))
 
+(defun get-user-instrument (prompt &key (initial-string "") owner 
+                                 (size (om::om-make-point 600 100))
+                                 (position (om::om-make-point 200 140)))
+ (om-api::prompt-for-string  prompt :initial-value initial-string :title "Search Instrument"))
+	 
+(defun search-sib-instruments (&optional name)
+ (let ((str (if name 
+	 	        name
+	 	       (get-user-instrument "Type an instrument name:")))
+	   (found '()))
+  (maphash #'(lambda (name id) 
+ 	          (when (search str name) 
+				    (setq found (append (list name) found)) 
+					))
+  *sib-instruments-hash*)
+  found))
+
+(defun instid-to-longname (instid)
+ (let ((posn1 (search "[" instid))
+         (posn2 (search "(" instid)))
+(cond ((and posn1 posn2)
+           (subseq instid 0 (1- (min posn1 posn2))))
+          ((and posn1 (null posn2))
+           (subseq instid 0 (1- posn1)))
+          ((and (null posn1) posn2)
+           (subseq instid 0 (1- posn2)))
+          (t instid))))
+     
 ;;; LINES
 
 (defvar *SIB-lines-file* (namestring
@@ -195,7 +226,7 @@ and the line style accepted by Sibelius Manuscript Language."
 										 (format nil (concatenate 'string lines "~%~a") x))))
  *sib-lines-hash*)
 (om::om-show-output-lines (format nil "~a" lines) "LINES")))
-
+			 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;Utilities;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -834,17 +865,23 @@ ARGUMENTS:
 (om::defmethod! show-sib-instruments ()
  :icon 100 
  :doc "This function opens a documentation window conatining all available instrument names."
- (omsib::print-sib-instruments))
+ (print-sib-instruments))
+ 
+ (om::defmethod! search-sib-instrument (&optional (name nil))
+  :initvals '(nil)
+  :icon 100 
+  :doc "This function searches for an a instrument long name (or instruments longn names) which contains the argument <name>."
+ (search-sib-instruments name))
 
 (om::defmethod! show-sib-articulations ()
  :icon 99 
  :doc "This function opens a documentation window conatining all available articulations."
- (omsib::print-articulation-numbers))
+ (print-articulation-numbers))
  
  (om::defmethod! show-sib-lines ()
   :icon 101 
-  :doc "This function opens a documentation window conatining all available articulations."
-  (omsib::print-sib-lines))
+  :doc "This function opens a documentation window conatining all available lines."
+  (print-sib-lines))
 
 ;;; EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -1,5 +1,7 @@
 TODO
-- SIMPLIFY sib-instruments.lisp
+- SIMPLIFY sib-instruments.lisp (SEARCH-SIB-INSTRUMENT fixed this!)
+
+- WARNING MESSAGE FOR SIMULTANEOUS TEMPI AND TIME SIGNATURES.
 
 - ADDITIONAL LINES (Accel. Rit., etc.)
 
@@ -8,3 +10,14 @@ TODO
 - PREFERENCES MODULE - midic-approx., export options, Title, composer, etc... 
 
 - ADD-EXTRAS TO OM OBJECTS (articulations, dynamics, texts)
+
+****************************
+* UPDATES FOR NEXT RELEASE *
+****************************
+ 
+-> Corrected time signature changes (only occurs for voice number 1)
+   OBS: For now, Sibelius does not support multiple simultaneous time signatures and multiple simultaneous tempi.
+
+-> Minor correction in the documentation string of show-sib-lines.
+
+-> Added method SEARCH-SIB-INSTRUMENT (example patch 03 also updated)
