@@ -864,7 +864,7 @@ ARGUMENTS:
 
 (om::defmethod! show-sib-instruments ()
  :icon 100 
- :doc "This function opens a documentation window conatining all available instrument names."
+ :doc "This function opens a documentation window containing all available instrument names."
  (print-sib-instruments))
  
  (om::defmethod! search-sib-instrument (&optional (name nil))
@@ -875,12 +875,12 @@ ARGUMENTS:
 
 (om::defmethod! show-sib-articulations ()
  :icon 99 
- :doc "This function opens a documentation window conatining all available articulations."
+ :doc "This function opens a documentation window containing all available articulations."
  (print-articulation-numbers))
  
  (om::defmethod! show-sib-lines ()
   :icon 101 
-  :doc "This function opens a documentation window conatining all available lines."
+  :doc "This function opens a documentation window containing all available lines."
   (print-sib-lines))
 
 ;;; EOF
