@@ -514,9 +514,9 @@ and the line style accepted by Sibelius Manuscript Language."
 			     (list (format nil "S~d" *mesure-num*) tempo)
                  (list (format nil "S~d" *mesure-num*))))
 				 
-    (unless (and lastmes (equal (first tree) (first (om::tree lastmes)) (= *voice-num* 1)))
-      (setf rep (append rep (list (format nil "g~a" (om::fnumerator (first tree)))
-                                               (format nil "f~a" (om::fdenominator (first tree)))))))
+ (unless (and lastmes (equal (first tree) (first (om::tree lastmes))) (= *voice-num* 1))
+   (setf rep (append rep (list (format nil "g~a" (om::fnumerator (first tree)))
+                               (format nil "f~a" (om::fdenominator (first tree)))))))
 	  
     (loop for obj in inside do
           (setf rep (append rep 
