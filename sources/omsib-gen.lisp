@@ -226,6 +226,27 @@ and the line style accepted by Sibelius Manuscript Language."
 										 (format nil (concatenate 'string lines "~%~a") x))))
  *sib-lines-hash*)
 (om::om-show-output-lines (format nil "~a" lines) "LINES")))
+
+(defun get-chord-posn-for-lines (voice chord1 chord2)
+(let* ((chords (remove-if #'om::rest-p (om::collect-chords voice)))
+         temp-posn)
+(om::mat-trans 
+ (mapcar #'(lambda (lst)
+                 (remove nil lst))
+ (loop for chord in chords
+           for x from 0
+           when  (and (equal (om::sort-list (om::lmidic chord)) (om::sort-list chord1))
+                              (not (om::cont-chord-p chord)))
+          collect x into chord1-posn
+          when  (equal (om::sort-list (om::lmidic chord)) (om::sort-list chord2))
+          collect (let ((next-chord (if (nth (1+ x) chords) 
+                                                   (om::sort-list (om::lmidic (nth (1+ x) chords))))))
+                    (if (and (equal (om::sort-list (om::lmidic chord)) next-chord)
+                                (om::cont-chord-p (nth (1+ x) chords)))
+                          nil
+                          x))
+          into chord2-posn
+          finally (return (list chord1-posn chord2-posn)))))))
 			 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;Utilities;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -416,7 +437,7 @@ and the line style accepted by Sibelius Manuscript Language."
 (if (null lines) 
    nil
 (loop for line in lines
-     collect (let* ((notes-posn (om::posn-match positions-no-rests (butlast line)))
+     collect(let* ((notes-posn (om::posn-match positions-no-rests (butlast line)))
                         (line-posn (first notes-posn))
                         (line-dur (- (second notes-posn) line-posn)))
                   (list (format nil "P~a" (round line-posn))
@@ -478,7 +499,6 @@ and the line style accepted by Sibelius Manuscript Language."
                                   (setf tempo (list (format nil "u~a" 256) (format nil "e~a" tempo))))
                       (setf tempo nil))
                 (setf rep (append rep (cons-sib-text mes lastmes tempo)))
-				(setf rep (append rep (format-lines *voice-note-positions* lin)))
                 (setf lastmes mes)
                 )))
 
@@ -486,10 +506,12 @@ and the line style accepted by Sibelius Manuscript Language."
             for i = 1 then (+ i 1) do
             (setf *mesure-num* (incf *mesure-num*))
             (setf rep (append rep (list (format nil "b~d" *mesure-num*))))
-            (setf rep (append rep (cons-sib-text mes lastmes nil)))
-			(setf rep (append rep (format-lines *voice-note-positions* lin)))
+            (setf rep (append rep (cons-sib-text mes lastmes nil)))			
             (setf lastmes mes))
       ))
+
+(setf rep (append rep (format-lines *voice-note-positions* lin)))
+
  (if *score-number-of-measures*
 	 (progn (setf *score-number-of-measures* nil)
              rep)
@@ -514,9 +536,9 @@ and the line style accepted by Sibelius Manuscript Language."
 			     (list (format nil "S~d" *mesure-num*) tempo)
                  (list (format nil "S~d" *mesure-num*))))
 				 
- (unless (and lastmes (equal (first tree) (first (om::tree lastmes))) (= *voice-num* 1))
-   (setf rep (append rep (list (format nil "g~a" (om::fnumerator (first tree)))
-                               (format nil "f~a" (om::fdenominator (first tree)))))))
+    (unless (and lastmes (equal (first tree) (first (om::tree lastmes))) (= *voice-num* 1))
+      (setf rep (append rep (list (format nil "g~a" (om::fnumerator (first tree)))
+                                               (format nil "f~a" (om::fdenominator (first tree)))))))
 	  
     (loop for obj in inside do
           (setf rep (append rep 
@@ -832,6 +854,27 @@ and the line style accepted by Sibelius Manuscript Language."
 			(loop for e in ext do (om::add-extra-list chrd e "exact" nil))))
   clone
   ))
+
+(om::defmethod! add-sib-articulations ((self om::voice) (posn-art list))
+ :initvals (list om::t '((0 1) (2 (4 1))))
+ :indoc '("voice" "positions-articulations")
+ :icon 99
+ :doc "Adds articulations to a voice object.
+Note that this method relies on OM Add-extras that still in development. Only useful for preview the final result of the score."
+ (add-extra-text self (mapcar #'(lambda (x) (if (listp x) 
+							                (format nil "~{~A~^ ~}" (loop for num in x collect (artnum->str num)))
+							                (artnum->str x))) 
+                                (mapcar #'second posn-art))
+
+                                (mapcar #'first posn-art)))
+								
+(om::defmethod! mk-line ((self om::voice) (chord1 list) (chord2 list) (line string))
+ :initvals '( ni (9900) (9800) "Slur above")
+ :indoc '("voice or poly" "list" "list" "string")
+ :icon 99 
+ :doc "This function create line arguments from a voice, the initial chord, the end chord and line."
+ (let ((positions (get-chord-posn-for-lines self chord1 chord2)))
+ (mapcar #'(lambda (posn) (om::x-append posn line)) positions)))
 
  ;;; EXPORT 
 

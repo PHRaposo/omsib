@@ -21,3 +21,11 @@ TODO
 -> Minor correction in the documentation string of show-sib-lines.
 
 -> Added method SEARCH-SIB-INSTRUMENT (example patch 03 also updated)
+
+-> Fixed lines (removed from measure loop)
+
+-> Added EXTRAS (add-sib-articulations, add-extra-vel, mk-line)
+
+-> Added new example patch (Messiaen - Mode de Valeurs)
+
+

@@ -30,7 +30,7 @@
 
 (fill-library '( ("Export" Nil Nil (omsib::om->sib) Nil)
  		         ("Doc" Nil Nil (omsib::show-sib-instruments omsib::search-sib-instrument omsib::show-sib-articulations omsib::show-sib-lines) Nil)
-				 ;("Extras" Nil Nil (omsib::add-extra-text omsib::add-extra-vel) Nil)
+				 ("Extras" Nil Nil (omsib::add-sib-articulations omsib::add-extra-vel omsib::mk-line) Nil)
                  ))
  				
 (print (format nil "
