@@ -1,5 +1,4 @@
 TODO
-- SIMPLIFY sib-instruments.lisp (SEARCH-SIB-INSTRUMENT fixed this!)
 
 - WARNING MESSAGE FOR SIMULTANEOUS TEMPI AND TIME SIGNATURES.
 
@@ -7,9 +6,9 @@ TODO
 
 - ADDITIONAL TEXTS - Technique (pizz. arco., sul pont., etc.)
 
-- PREFERENCES MODULE - midic-approx., export options, Title, composer, etc... 
-
 - ADD-EXTRAS TO OM OBJECTS (articulations, dynamics, texts)
+
+- DOCUMENTATION (functions [string-doc] and patches)
 
 ****************************
 * UPDATES FOR NEXT RELEASE *
@@ -27,5 +26,19 @@ TODO
 -> Added EXTRAS (add-sib-articulations, add-extra-vel, mk-line)
 
 -> Added new example patch (Messiaen - Mode de Valeurs)
+
+-> Added composer's name (from OM preferences) to the final score (function get-composer-name)
+
+-> Added function get-score-title (from OMPatch title)
+
+-> Added Title
+
+-> Changes Sibelius plugin:
+   - Removed Close All Active Scores (if there is no staves in the Active Score, there's no need to create a new scores
+   - Removed text warnings
+
+
+
+
 
 

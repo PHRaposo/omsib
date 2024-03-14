@@ -13,7 +13,10 @@
  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GLOBAL VARIABLES
-  
+
+(defvar *score-composer* nil)
+(setf *score-composer* (om::get-pref (om::find-pref-module :General) :user-name))  
+	
 (defvar *approx-midic* nil)
 (setf *approx-midic* om::*global-midi-approx*)
 
@@ -22,6 +25,7 @@
 (defvar *tempdyn* nil)
 (defvar *custom-dyn* nil)
 (defvar *chars-for-extras* nil)
+(defvar *technique-text* nil)
 
 (defvar *score-number-of-measures* nil)
 (defvar *treeratios* '())
@@ -48,8 +52,23 @@
 ;;;piano pedal
  ("Ped." . "q") ("*" . ":")
 ;;;articulations
- (".>" . "y") ("._" . "u") (("_.") . "v") ("v" . "{") ("^" . "w") ("V" . "r") ("[" . "s") (">" . ">") ("o" . "/") ("+" . "+") ("_" . "_")
+ (".>" . "y") ("._" . "u") ("_." . "v") ("v" . "{") ("^" . "w") ("V" . "r") ("[" . "s") (">" . ">") ("o" . "/") ("_" . "x") ("+" . nil) ("'" . nil)
 ))
+
+(defun extra-char-or-text (str &optional deltay)
+(let ((char (get-char-extra-from-string str))
+        (text str))
+(print deltay)
+(if char
+   (make-instance 'om::char-extra
+    :deltax -0.1
+    :deltay (if deltay (- deltay (* (/ (1- deltay) 1.5) 1.3)) 1)
+    :thechar char)
+
+ (make-instance 'om::text-extra
+   :deltax -0.1
+   :deltay (if deltay deltay 1)
+   :thetext text))))
 
 (defun get-dyn-from-om (elmt)
 (let (res)
@@ -61,6 +80,14 @@
 
   ;(get-dyn-from-om 127)
 
+(setf *technique-text*
+'("arco" "con-sord." "divisi" "div." "l.v." "mute" "nat." "open" 
+  "pizz." "senza-sord." "solo" "sul-pont." "sul-tasto" "tre-corde"
+  "tremolo" "tutti" "una-corda" "unis."))
+  
+(defun technique? (str)
+ (not (null (member str omsib::*technique-text* :test 'equal))))
+ 
 (setf *custom-dyn* 
     (list (list (list 0 20)  "ppp")
           (list (list 21 40)  "pp")
@@ -383,6 +410,9 @@ and the line style accepted by Sibelius Manuscript Language."
   (when (> *approx-midic* 4) (setf *approx-midic* 4))
   (loop for elt in (cons-sib-text voice (list "unnamed (treble staff)" nil nil) (list articulations lines)) do (print elt)))
 
+(defun get-score-title ()
+ (string-trim ".omp"
+  (file-namestring (om::mypathname (om::obj (om::om-front-window))))))
 
 ;;;for extras
 ;(defun massq (item list)
@@ -509,7 +539,7 @@ and the line style accepted by Sibelius Manuscript Language."
             (setf rep (append rep (cons-sib-text mes lastmes nil)))			
             (setf lastmes mes))
       ))
-
+    
 (setf rep (append rep (format-lines *voice-note-positions* lin)))
 
  (if *score-number-of-measures*
@@ -538,8 +568,7 @@ and the line style accepted by Sibelius Manuscript Language."
 				 
     (unless (and lastmes (equal (first tree) (first (om::tree lastmes))) (= *voice-num* 1))
       (setf rep (append rep (list (format nil "g~a" (om::fnumerator (first tree)))
-                                               (format nil "f~a" (om::fdenominator (first tree)))))))
-	  
+                                               (format nil "f~a" (om::fdenominator (first tree)))))))	  
     (loop for obj in inside do
           (setf rep (append rep 
                             (let* ((dur-obj-noire (/ (om::extent obj) (om::qvalue obj)))
@@ -548,6 +577,9 @@ and the line style accepted by Sibelius Manuscript Language."
                               exp
                               )
                             )))
+    (if (and (= *voice-num* 1) (= *mesure-num* 1)) 
+             (setf rep (append rep (list (format nil "I~a" (get-score-title)) 
+                                                      (format nil "C~a" *score-composer*)))))                                                           
     rep))
 
 (defun get-sibnote-durs (list)
@@ -837,19 +869,21 @@ and the line style accepted by Sibelius Manuscript Language."
 				  		         ;(init-deltay (if stem-up? 1 -3))
 				  		         )
 				           (if (= (length char) 1)
-				  	           (make-instance 'om::char-extra
-					  	                      :deltax -0.1
-                                                 :deltay 1 ;init-deltay
-                                                 :thechar (get-char-extra-from-string (car char))
-								(loop for ch in char 
-									  for x from 0 by 1.5
-									  collect (make-instance 'om::char-extra
-					  	                      :deltax -0.1
-                                                 :deltay (1+ x) ;(if stem-up? (+ init-deltay x) (- init-deltay x))
-                                                 :thechar (get-char-extra-from-string ch)))))))))
+                                                    (extra-char-or-text (car char))
+				  	           ;(make-instance 'om::char-extra
+					  	   ;                   :deltax -0.1
+                                                   ;:deltay 1 ;init-deltay
+                                                   ;:thechar (get-char-extra-from-string (car char))
+						(loop for ch in char 
+							 for x from 0 by 1.5
+							 collect (extra-char-or-text ch (1+ x))))))))
+                                                                        ;(make-instance 'om::char-extra
+					  	                         ;:deltax -0.1
+                                                                         ;:deltay (1+ x) ;(if stem-up? (+ init-deltay x) (- init-deltay x))
+                                                                         ;:thechar (get-char-extra-from-string ch)))))))))
   (loop for chrd in posn-chrds
         for ext in extras
-        do (if (om::char-extra-p ext)
+        do (if (or (om::char-extra-p ext) (om::text-extra-p ext))
 	 	    (om::add-extra-list chrd ext "exact" nil)
 			(loop for e in ext do (om::add-extra-list chrd e "exact" nil))))
   clone
@@ -869,7 +903,7 @@ Note that this method relies on OM Add-extras that still in development. Only us
                                 (mapcar #'first posn-art)))
 								
 (om::defmethod! mk-line ((self om::voice) (chord1 list) (chord2 list) (line string))
- :initvals '( ni (9900) (9800) "Slur above")
+ :initvals '( nil (9900) (9800) "Slur above")
  :indoc '("voice or poly" "list" "list" "string")
  :icon 99 
  :doc "This function create line arguments from a voice, the initial chord, the end chord and line."
