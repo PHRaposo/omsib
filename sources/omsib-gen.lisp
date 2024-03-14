@@ -413,7 +413,12 @@ and the line style accepted by Sibelius Manuscript Language."
 (defun get-score-title ()
  (string-trim ".omp"
   (file-namestring (om::mypathname (om::obj (om::om-front-window))))))
-
+  
+(defun get-user-score-title (prompt &key (initial-string "") owner
+                               (size (om::om-make-point 600 100))
+                               (position (om::om-make-point 200 140)))
+ (om-api::prompt-for-string  prompt :initial-value initial-string :title "Choose a title:"))
+													
 ;;;for extras
 ;(defun massq (item list)
 ;(format nil "~S" (cdr (assoc item list :test 'equal))))  
@@ -577,9 +582,11 @@ and the line style accepted by Sibelius Manuscript Language."
                               exp
                               )
                             )))
-    (if (and (= *voice-num* 1) (= *mesure-num* 1)) 
-             (setf rep (append rep (list (format nil "I~a" (get-score-title)) 
-                                                      (format nil "C~a" *score-composer*)))))                                                           
+(if (and (= *voice-num* 1) (= *mesure-num* 1))
+         (setf rep (append rep (list (format nil "I~a" (if (equal :win om::*om-os*)
+                                                           (get-user-score-title "OM->SIB")
+                                                           (get-score-title)))
+                                     (format nil "C~a" *score-composer*)))))                                                          
     rep))
 
 (defun get-sibnote-durs (list)

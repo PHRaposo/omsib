@@ -37,7 +37,7 @@ TODO
    - Removed Close All Active Scores (if there is no staves in the Active Score, there's no need to create a new scores
    - Removed text warnings
 
-
+-> Fixed Title for Windows users (temporary)
 
 
 
