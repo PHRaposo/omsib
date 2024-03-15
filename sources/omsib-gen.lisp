@@ -70,6 +70,17 @@
    :deltay (if deltay deltay 1)
    :thetext text))))
 
+(setf *custom-dyn* 
+    (list (list (list 0 20)  "ppp")
+          (list (list 21 40)  "pp")
+          (list (list 41 55)  "p")
+          (list (list 56 60)  "mp")
+          (list (list 61 85)  "mf")
+          (list (list 86 100)  "f")
+          (list (list 101 115)  "ff")
+          (list (list 116 127)  "fff")
+          ))
+
 (defun get-dyn-from-om (elmt)
 (let (res)
   (loop 
@@ -88,17 +99,6 @@
 (defun technique? (str)
  (not (null (member str omsib::*technique-text* :test 'equal))))
  
-(setf *custom-dyn* 
-    (list (list (list 0 20)  "ppp")
-          (list (list 21 40)  "pp")
-          (list (list 41 55)  "p")
-          (list (list 56 60)  "mp")
-          (list (list 61 85)  "mf")
-          (list (list 86 100)  "f")
-          (list (list 101 115)  "ff")
-          (list (list 116 127)  "fff")
-          ))
-
   ;;; ARTICULATIONS
 
 (defun print-articulation-numbers ()
@@ -412,12 +412,18 @@ and the line style accepted by Sibelius Manuscript Language."
 
 (defun get-score-title ()
  (string-trim ".omp"
-  (file-namestring (om::mypathname (om::obj (om::om-front-window))))))
+  (file-namestring 
+   (car (remove nil
+   (loop for i in (om::elements om::*current-workspace*)
+         collect (if (om::editorframe i)
+                     (om::mypathname i))))))))
+					 
+;(om::mypathname (om::obj (om::om-front-window))))))
   
-(defun get-user-score-title (prompt &key (initial-string "") owner
-                               (size (om::om-make-point 600 100))
-                               (position (om::om-make-point 200 140)))
- (om-api::prompt-for-string  prompt :initial-value initial-string :title "Choose a title:"))
+;(defun get-user-score-title (prompt &key (initial-string "") owner
+;                               (size (om::om-make-point 600 100))
+;                               (position (om::om-make-point 200 140)))
+; (om-api::prompt-for-string  prompt :initial-value initial-string :title "Choose a title:"))
 													
 ;;;for extras
 ;(defun massq (item list)
@@ -451,7 +457,7 @@ and the line style accepted by Sibelius Manuscript Language."
           (progn 
           (setf *voice-num* (incf *voice-num*))
           (setf rep (append rep (cons-sib-text staff (nth i instruments) (nth i articulations-lines))))))
-   
+
    (om::save-data (mapcar #'list (om::flat rep)))))
 
 (defun cons-voice-positions-and-durations (voice)
@@ -504,10 +510,16 @@ and the line style accepted by Sibelius Manuscript Language."
         (new-self (if art (add-extra-text self (mapcar #'second art) (mapcar #'first art))
 			               self)) 
         (mesures (om::inside new-self))
-        (inst (if (equal (get-sib-instrument (first instrument)) "nil")
-                    (progn (om::om-message-dialog (format nil "~A is not a valid Sibelius instrument for voice number ~d.~%Instrument set to unnamed treble staff." instrument *voice-num*)) 
-                           (list (get-sib-instrument "unnamed (treble staff)") nil nil))
-                  (list-sib-instruments instrument)))
+        (inst (cond ((null instrument)
+			    (list (get-sib-instrument "unnamed (treble staff)") nil nil))
+					 
+			   ((and (stringp (first instrument))
+				     (equal (get-sib-instrument (first instrument)) "nil"))
+                          (progn (om::om-message-dialog (format nil "~A is not a valid Sibelius instrument for voice number ~d.~%Instrument set to unnamed treble staff." (first instrument) *voice-num*)) 
+                          (list (get-sib-instrument "unnamed (treble staff)") nil nil)))
+						   
+			 (t (list-sib-instruments instrument))))
+
 		(lin (second articulations-lines))
         (lastmes nil))
 	  (cons-voice-positions-and-durations self)	
@@ -583,9 +595,7 @@ and the line style accepted by Sibelius Manuscript Language."
                               )
                             )))
 (if (and (= *voice-num* 1) (= *mesure-num* 1))
-         (setf rep (append rep (list (format nil "I~a" (if (equal :win om::*om-os*)
-                                                           (get-user-score-title "OM->SIB")
-                                                           (get-score-title)))
+         (setf rep (append rep (list (format nil "I~a" (get-score-title))
                                      (format nil "C~a" *score-composer*)))))                                                          
     rep))
 

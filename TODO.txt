@@ -37,7 +37,9 @@ TODO
    - Removed Close All Active Scores (if there is no staves in the Active Score, there's no need to create a new scores
    - Removed text warnings
 
--> Fixed Title for Windows users (temporary)
+-> Fixed Title for Windows users (thanks to K.Haddad)
+
+-> Removed warning when instrument is NULL
 
 
 
