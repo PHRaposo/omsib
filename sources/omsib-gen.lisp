@@ -16,6 +16,7 @@
 
 (defvar *score-composer* nil)
 (setf *score-composer* (om::get-pref (om::find-pref-module :General) :user-name))  
+(defvar *score-title* nil)
 	
 (defvar *approx-midic* nil)
 (setf *approx-midic* om::*global-midi-approx*)
@@ -410,13 +411,13 @@ and the line style accepted by Sibelius Manuscript Language."
   (when (> *approx-midic* 4) (setf *approx-midic* 4))
   (loop for elt in (cons-sib-text voice (list "unnamed (treble staff)" nil nil) (list articulations lines)) do (print elt)))
 
-(defun get-score-title ()
- (string-trim ".omp"
-  (file-namestring 
-   (car (remove nil
-   (loop for i in (om::elements om::*current-workspace*)
-         collect (if (om::editorframe i)
-                     (om::mypathname i))))))))
+;(defun get-score-title ()
+; (string-trim ".omp"
+;  (file-namestring 
+;   (car (remove nil
+;   (loop for i in (om::elements om::*current-workspace*)
+;         collect (if (om::editorframe i)
+;                     (om::mypathname i))))))))
 					 
 ;(om::mypathname (om::obj (om::om-front-window))))))
   
@@ -444,7 +445,11 @@ and the line style accepted by Sibelius Manuscript Language."
 (defmethod cons-sib-text ((self om::poly) instruments articulations-lines)
   (let ((rep '())
          (voices (om::inside self))
-        (articulations-lines (om::mat-trans articulations-lines)))	 
+        (articulations-lines (om::mat-trans articulations-lines)))
+	 
+  (if (= 1 (length voices))
+      (setf *score-title* (om::name (om::associated-box (car voices))))
+      (setf *score-title* (om::name (om::associated-box self))))
 
   (when (> *approx-midic* 4) (setf *approx-midic* 4))
    		 
@@ -458,7 +463,8 @@ and the line style accepted by Sibelius Manuscript Language."
           (setf *voice-num* (incf *voice-num*))
           (setf rep (append rep (cons-sib-text staff (nth i instruments) (nth i articulations-lines))))))
 
-   (om::save-data (mapcar #'list (om::flat rep)))))
+   (progn (setf *score-tile* nil)
+              (om::save-data (mapcar #'list (om::flat rep))))))
 
 (defun cons-voice-positions-and-durations (voice)
  (let* ((tree (om::tree voice))
@@ -595,8 +601,8 @@ and the line style accepted by Sibelius Manuscript Language."
                               )
                             )))
 (if (and (= *voice-num* 1) (= *mesure-num* 1))
-         (setf rep (append rep (list (format nil "I~a" (get-score-title))
-                                     (format nil "C~a" *score-composer*)))))                                                          
+         (setf rep (append rep (list (format nil "I~a" *score-title*) ;(get-score-title))
+                                                  (format nil "C~a" *score-composer*)))))                                                         
     rep))
 
 (defun get-sibnote-durs (list)
