@@ -14,8 +14,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; GLOBAL VARIABLES
 
-(defvar *score-composer* nil)
-(setf *score-composer* (om::get-pref (om::find-pref-module :General) :user-name))  
+;(defvar *score-composer* nil) 
 (defvar *score-title* nil)
 	
 (defvar *approx-midic* nil)
@@ -430,6 +429,9 @@ and the line style accepted by Sibelius Manuscript Language."
 ;(defun massq (item list)
 ;(format nil "~S" (cdr (assoc item list :test 'equal))))  
 
+(defun get-score-composer ()
+(om::get-pref (om::find-pref-module :General) :user-name))
+ 
 (defun massq (item list)
 (cdr (assoc item list :test 'equal)))
 
@@ -602,7 +604,8 @@ and the line style accepted by Sibelius Manuscript Language."
                             )))
 (if (and (= *voice-num* 1) (= *mesure-num* 1))
          (setf rep (append rep (list (format nil "I~a" *score-title*) ;(get-score-title))
-                                                  (format nil "C~a" *score-composer*)))))                                                         
+                                                  (format nil "C~a" (get-score-composer) ;*score-composer*
+                                                          )))))                                                         
     rep))
 
 (defun get-sibnote-durs (list)
