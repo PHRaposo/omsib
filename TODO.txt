@@ -41,6 +41,8 @@ TODO
 
 -> Removed warning when instrument is NULL
 
+-> Fixed search-instrument (string-downcase)
+
 
 
 

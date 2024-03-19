@@ -200,8 +200,8 @@ a list of list with these two arguments."
 	 
 (defun search-sib-instruments (&optional name)
  (let ((str (if name 
-	 	        name
-	 	       (get-user-instrument "Type an instrument name:")))
+	 	        (string-downcase name)
+	 	       (string-downcase (get-user-instrument "Type an instrument name:"))))
 	   (found '()))
   (maphash #'(lambda (name id) 
  	          (when (search str name) 
