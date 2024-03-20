@@ -12,10 +12,10 @@
 
 (defvar *omsib-files* nil)
 (setf  *omsib-files* (list
-						 (om::om-relative-path '("sources") "package")						 
-			             (om::om-relative-path '("sources") "sib-instruments")
-                         (om::om-relative-path '("sources") "sib-lines")
-                         (om::om-relative-path '("sources") "omsib-gen")						 							 					 		 					 							 
+						 (om-relative-path '("sources") "package")						 
+			             (om-relative-path '("sources") "sib-instruments")
+                         (om-relative-path '("sources") "sib-lines")
+                         (om-relative-path '("sources") "omsib-gen")						 							 					 		 					 							 
                           ))
 						 
 ;--------------------------------------------------
@@ -29,7 +29,7 @@
 
 
 (fill-library '( ("Export" Nil Nil (omsib::om->sib) Nil)
- 		         ("Doc" Nil Nil (omsib::show-sib-instruments omsib::search-sib-instrument omsib::show-sib-articulations omsib::show-sib-lines) Nil)
+ 		         ("Doc" Nil Nil (omsib::show-sib-instruments omsib::search-sib-instrument omsib::show-sib-articulations omsib::show-sib-lines omsib::show-sib-technique-texts) Nil)
 				 ("Extras" Nil Nil (omsib::add-sib-articulations omsib::add-extra-vel omsib::mk-line) Nil)
                  ))
  				

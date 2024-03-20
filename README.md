@@ -15,7 +15,7 @@ PLUGIN INSTALLATION
 
 -> For Windows: C:\Users[My Username]\AppData\Roaming\Avid\Sibelius [Version]\Plugins
 
--> For Mac: /Users/[My Username]/Library/Application\ Support/Avid/Sibelius/Plugins for Mac)
+-> For Mac: /Users/[My Username]/Library/Application\ Support/Avid/Sibelius/Plugins
 
 
 

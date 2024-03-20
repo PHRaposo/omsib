@@ -18,7 +18,6 @@
 (defvar *score-title* nil)
 	
 (defvar *approx-midic* nil)
-(setf *approx-midic* om::*global-midi-approx*)
 
 ;(defvar *sib-chan-on* nil)
 (defvar *sib-dyn-on* t)
@@ -58,7 +57,7 @@
 (defun extra-char-or-text (str &optional deltay)
 (let ((char (get-char-extra-from-string str))
         (text str))
-(print deltay)
+
 (if char
    (make-instance 'om::char-extra
     :deltax -0.1
@@ -91,13 +90,47 @@
 
   ;(get-dyn-from-om 127)
 
+;;; TECHNIQUE TEXTS
+
 (setf *technique-text*
 '("arco" "con-sord." "divisi" "div." "l.v." "mute" "nat." "open" 
   "pizz." "senza-sord." "solo" "sul-pont." "sul-tasto" "tre-corde"
   "tremolo" "tutti" "una-corda" "unis."))
+
+(defvar *splitted-technique* nil)
+(setf *splitted-technique* '(("arco" . "arco") ("con-sord." . "con sord.") ("divisi" . "divisi")  ("div." . "div.")  ("l.v." . "l.v.")  
+("mute" . "mute")  ("nat." . "nat") ("open" . "open") ("pizz." . "pizz.") ("senza-sord." . "senza sord.") ("solo" . "solo") 
+("sul-pont." . "sul pont.")  ("sul-tasto" . "sul tasto")  ("tre-corde" . "tre corde") ("tremolo" . "tremolo") ("tutti" . "tutti") 
+("una-corda" . "una corda") ("unis." . "unis.")))
+    
+(defun split-tech-text (text)
+ (massq text *splitted-technique*))
   
 (defun technique? (str)
  (not (null (member str omsib::*technique-text* :test 'equal))))
+
+(defun print-sib-technique-texts ()
+ (om::om-show-output-lines 
+"arco
+con-sord. 
+divisi 
+div.
+l.v.
+mute
+nat.
+open
+pizz.
+senza-sord.
+solo
+sul-pont.
+sul-tasto
+tre-corde
+tremolo
+tutti
+una-corda
+unis."
+"TECHNIQUE TEXTS"
+))
  
   ;;; ARTICULATIONS
 
@@ -392,12 +425,6 @@ and the line style accepted by Sibelius Manuscript Language."
 (defmethod getdembeams ((self om::rest) dur ratio)
   (if (listp dur) (car dur) dur)) 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;;;;;DA CODE;;;;;;;;;;;;;;;
-;;;;where everything is transcribed
-
 ;;;;;;;;;;;;;;Utilities section
 
 (defun cassq (sym l)
@@ -429,6 +456,9 @@ and the line style accepted by Sibelius Manuscript Language."
 ;(defun massq (item list)
 ;(format nil "~S" (cdr (assoc item list :test 'equal))))  
 
+(defun get-def-midic-approx ()
+ (setf *approx-midic* om::*global-midi-approx*))
+
 (defun get-score-composer ()
 (om::get-pref (om::find-pref-module :General) :user-name))
  
@@ -444,14 +474,66 @@ and the line style accepted by Sibelius Manuscript Language."
 (defmethod get-number-of-measures ((object om::poly))
   (mapcar #'get-number-of-measures (om::inside object)))
 
+(defun all-equal? (lst)
+(if (null lst)
+    nil
+   (let ((no-nils (mapcar #'(lambda (x) (remove nil x)) lst)))
+(if (= 1 (length no-nils))
+    t
+  (loop for subl in no-nils
+           collect (every #'(lambda (x) (equal (first subl) x)) subl))))))
+
+(defun check-timesigs (voices)
+ (let* ((timesigs (om::mat-trans (loop for voice in voices 
+                                  collect (loop for measure in (om::inside voice)
+                                                      collect (car (om::tree measure))))))
+       (equal-timesigs? (all-equal? timesigs))
+       (dialog (if (or equal-timesigs? (not (position nil equal-timesigs?)))
+                        t
+                       (om::om-y-or-n-dialog  (format nil "~a~%~a" "WARNING: This library does not support multiple time signatures at the same time." "Do you wish to continue?"))
+                       )))
+(if (null dialog) 
+    (om::om-abort))))
+
+(defun get-tempos (voice)
+ (let* ((tempo (om::tempo voice)))
+  (if (second tempo)
+      (append (list (second (car tempo)))
+	          (loop for el in (second tempo)
+                    collect (second (cadr el))))
+      (second (car tempo)))))
+				  
+(defun check-tempos (voices)
+ (let* ((tempos (mapcar #'get-tempos voices))
+        (equal-tempos? (mapcar #'equal tempos (cdr tempos)))
+        (dialog (if (position 'nil equal-tempos?)
+                    (om::om-y-or-n-dialog  (format nil "~a~%~a" "WARNING: This library does not support polytempo." "Do you wish to continue?"))
+                     t)))
+(if (null dialog)
+    (om::om-abort))))
+	 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;DA CODE;;;;;;;;;;;;;;;
+;;;;where everything is transcribed
+
+;;; POLY 
+
 (defmethod cons-sib-text ((self om::poly) instruments articulations-lines)
   (let ((rep '())
-         (voices (om::inside self))
+        (voices (om::inside self))
         (articulations-lines (om::mat-trans articulations-lines)))
 	 
   (if (= 1 (length voices))
       (setf *score-title* (om::name (om::associated-box (car voices))))
       (setf *score-title* (om::name (om::associated-box self))))
+	  
+  (unless (= 1 (length voices))
+	      (progn (check-tempos voices)
+		         (check-timesigs voices)))
+  
+  (get-def-midic-approx)
 
   (when (> *approx-midic* 4) (setf *approx-midic* 4))
    		 
@@ -505,6 +587,8 @@ and the line style accepted by Sibelius Manuscript Language."
  (progn 
   (setf *measure-note-durations* sibelius-durs)
    sibelius-positions)))
+
+;;; VOICE 
 	   
 (defmethod cons-sib-text ((self om::voice) instrument articulations-lines)
   (setf *mesure-num* 0)
@@ -513,8 +597,14 @@ and the line style accepted by Sibelius Manuscript Language."
          (art (if (first articulations-lines)
 		 	      (loop for a in (first articulations-lines)
                         collect (if (listp (second a)) 
-							        (om::subs-posn a '(1) (format nil "~{~A~^ ~}" (loop for num in (second a) collect (artnum->str num))))
-							        (om::subs-posn a '(1) (artnum->str (second a)))))))
+							        (om::subs-posn a '(1) (format nil "~{~A~^ ~}" 
+											               (loop for num in (second a) 
+											                        collect (if (numberp num)
+										                                               (artnum->str num)
+														                num))))
+							        (om::subs-posn a '(1) (if (numberp (second a)) 
+											               (artnum->str (second a))
+												       (second a)))))))
         (new-self (if art (add-extra-text self (mapcar #'second art) (mapcar #'first art))
 			               self)) 
         (mesures (om::inside new-self))
@@ -575,6 +665,8 @@ and the line style accepted by Sibelius Manuscript Language."
 ;symb-beat-val= For a key signature equivalent to 3//3 will be the half note (blanche)
 ;real-beat-val= For the same key sign, this will be the halfnote of a triplet (blanche de triolet)
 ;These refer to the beats in a measure, and for special cases using non-standard key signature
+
+;;; MEASURE 
 
 (defmethod cons-sib-text ((self om::measure) lastmes tempo)
   (setf *chords-and-cont* (om::collect-chords  self))
@@ -732,6 +824,8 @@ and the line style accepted by Sibelius Manuscript Language."
   (remove 'nil 
   (loop for i in liste
         collect (if (om::vel-extra-p i) (om::thechar i)))))
+
+;;; CHORD-NOTE
 	 
 (defmethod cons-sib-text ((self om::chord) dur tempo)
   (let* ((notes (om::inside self))
@@ -748,7 +842,6 @@ and the line style accepted by Sibelius Manuscript Language."
          (sib-dur (pop *measure-note-durations*))
          (tup? *tuplet-note*)
          rep) 
-
      (setf rep (om::x-append  (if tup? sib-posn (format nil "p~d" sib-posn))
                     (if (= 1 (length notes)) 
                     (format nil "m~d" (let ((midi (/ (om::approx-m (om::midic (car notes)) *approx-midic*)  100))) 
@@ -764,18 +857,21 @@ and the line style accepted by Sibelius Manuscript Language."
                         )
                     (format nil "t~d" 1)  
                     (format nil "t~d" 0))
-                    (when (not (equal dyn *tempdyn*))
-                        (progn (setf *tempdyn* dyn)
-                          (list (format nil "y~d" sib-posn) 
-                                (format nil "v~a" dyn))))
                      (if tup? "xTrue" "xFalse")
                      (if tup? (format nil "X~a" *tuplet-depth*) "XFalse")
+                    (when (not (equal dyn *tempdyn*))
+                        (progn (setf *tempdyn* dyn)
+                               (format nil "v~a" dyn)))
                       (when text 
                               (let* ((art-num (mapcar #'get-articulation-num text)))
-                                 (format nil "a~a" (format nil "~{~A~^ ~}" (loop for num in art-num collect (format nil "~a" num))))))
+				 (if (every #'numberp art-num)
+                                     (format nil "a~a" (format nil "~{~A~^ ~}" (loop for num in art-num collect (format nil "~a" num))))
+							        (format nil "K~a" (format nil "~{~A~^ ~}" (loop for tex in text collect (format nil "~a" (if (technique? tex) (split-tech-text tex) tex))))))))
                     ))
 (list rep)
 ))
+
+;;; REST 
 
 (defmethod cons-sib-text ((self om::rest) dur tempo)
  (let ((durtot (if (listp dur) (car dur) dur))
@@ -784,8 +880,12 @@ and the line style accepted by Sibelius Manuscript Language."
         (tup? *tuplet-note*))
   (when tup? (list (list sib-posn (* durtot 1024))))))	
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; OM-INTERFACE
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  
+;;;;;;;;;;;;;;;;;;;;
+;;; OM-INTERFACE ;;;
+;;;;;;;;;;;;;;;;;;;;
 
 ;;; EXTRAS 
 
@@ -938,7 +1038,7 @@ Note that this method relies on OM Add-extras that still in development. Only us
 
  ;;; EXPORT 
 
-(om::defmethod! om->sib ((score-object om::voice) &optional (instruments nil) (articulations nil) (lines nil))
+(om::defmethod! om->sib ((score-object om::voice) &optional (instruments nil) (artic-or-text nil) (lines nil))
  :initvals '( nil nil nil nil)
  :indoc '("voice or poly" "list" "list of lists" "list of lists")
  :icon 99 
@@ -946,12 +1046,12 @@ Note that this method relies on OM Add-extras that still in development. Only us
 ARGUMENTS:
 <INPUT 0> Voice or poly object
 <INPUT 1> List of lists of sibelius instruments. For each voice this argument must include a list with two elements: the instrument longname and instrument shortname.
-<INPUT 2> List of lists of articulations. For each voice this argument must include a list of lists with two elements: a note position (starting on zero) and articulation number.
+<INPUT 2> List of lists of articulations or Technique texts. For each voice this argument must include a list of lists with two elements: a note position (starting on zero) and articulation number/text.
 <INPUT 3> List of lists of lines. For each voice this argument must include a list of lists containing three elements: the starting note, ending note and Line Style." 
 (let ((poly (om::make-instance 'om::poly :voices (list score-object))))
- (om->sib poly (list instruments) (list articulations) (list lines))))
+ (om->sib poly (list instruments) (list artic-or-text) (list lines))))
 
-(om::defmethod! om->sib ((score-object om::poly) &optional (instruments nil) (articulations nil) (lines nil))
+(om::defmethod! om->sib ((score-object om::poly) &optional (instruments nil) (artic-or-text nil) (lines nil))
  :initvals '( nil nil nil nil)
  :indoc '("voice or poly" "list of lists" "list of lists" "list of lists")
  :icon 99 
@@ -959,9 +1059,9 @@ ARGUMENTS:
 ARGUMENTS:
 <INPUT 0> Voice or poly object
 <INPUT 1> List of lists of sibelius instruments. For each voice this argument must include a list with two elements: the instrument longname and instrument shortname.
-<INPUT 2> List of lists of articulations. For each voice this argument must include a list of lists with two elements: a note position (starting on zero) and articulation number.
+<INPUT 2> List of lists of articulations or Technique texts. For each voice this argument must include a list of lists with two elements: a note position (starting on zero) and articulation number/text.
 <INPUT 3> List of lists of lines. For each voice this argument must include a list of lists containing three elements: the starting note, ending note and Line Style." 
- (cons-sib-text score-object instruments (list articulations lines)))
+ (cons-sib-text score-object instruments (list artic-or-text lines)))
 
 ;;; DOC 
 
@@ -985,6 +1085,11 @@ ARGUMENTS:
   :icon 101 
   :doc "This function opens a documentation window containing all available lines."
   (print-sib-lines))
+
+ (om::defmethod! show-sib-technique-texts ()
+  :icon 99 
+  :doc "This function opens a documentation window containing all available lines."
+  (print-sib-technique-texts))
 
 ;;; EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
