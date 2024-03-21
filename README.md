@@ -17,7 +17,7 @@ PLUGIN INSTALLATION
 
 -> For Mac: /Users/[My Username]/Library/Application\ Support/Avid/Sibelius/Plugins
 
-# Click in the link below to download the repository:
+# Click the link below to download the repository:
 
 # [Download](https://github.com/PHRaposo/omsib/archive/refs/heads/main.zip)
 
