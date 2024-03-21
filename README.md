@@ -19,7 +19,7 @@ PLUGIN INSTALLATION
 
 # Click in the link below to download the repository:
 
-# [Download] (https://github.com/PHRaposo/omsib/archive/refs/heads/main.zip)
+# [Download](https://github.com/PHRaposo/omsib/archive/refs/heads/main.zip)
 
 
 
