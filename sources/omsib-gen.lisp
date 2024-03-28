@@ -864,10 +864,16 @@ and the line style accepted by Sibelius Manuscript Language."
                                (format nil "v~a" dyn)))
                       (when text 
                               (let* ((art-num (mapcar #'get-articulation-num text)))
-				 (if (every #'numberp art-num)
-                                     (format nil "a~a" (format nil "~{~A~^ ~}" (loop for num in art-num collect (format nil "~a" num))))
-							        (format nil "K~a" (format nil "~{~A~^ ~}" (loop for tex in text collect (format nil "~a" (if (technique? tex) (split-tech-text tex) tex))))))))
-                    ))
+				 (cond ((every #'numberp art-num) ; <== only articulations
+                                            (format nil "a~a" (format nil "~{~A~^ ~}" (loop for num in art-num collect (format nil "~a" num)))))
+                                           ((every #'null art-num) ;<== only texts 
+				            (format nil "K~a" (format nil "~{~A~^ ~}" (loop for tex in text collect (format nil "~a" (if (technique? tex) (split-tech-text tex) tex))))))
+                                           (t ; <== mixed 
+                                             (let ((articulations (remove nil art-num))
+                                                    (texts (om::posn-match text (om::member-pos nil art-num))))
+                                               (om::x-append  (format nil "a~a" (format nil "~{~A~^ ~}" (loop for num in articulations collect (format nil "~a" num))))
+                                                                        (format nil "K~a" (format nil "~{~A~^ ~}" (loop for tex in texts collect (format nil "~a" (if (technique? tex) (split-tech-text tex) tex)))))))))))
+                      ))
 (list rep)
 ))
 
