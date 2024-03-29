@@ -1,14 +1,12 @@
 TODO
 
+- EXPORT CHORD-SEQ AND MULTI-SEQ OBJECTS 
+
+- AUTOMATIC CLEF CHANGES
+
 - ADDITIONAL LINES (Accel. Rit., etc.)
 
 - ADD-EXTRAS TO OM OBJECTS (articulations, dynamics, texts)
-
-- ADD EXAMPLES (Technique Texts, Title and Composer Text, Tuplets, Add Articulations-Texts [score preview])
-
-- DOCUMENTATION: 
-   - (functions [string-doc] and patches)
-   - PDF Manual
 
 ****************************
 * UPDATES FOR NEXT RELEASE *
@@ -54,3 +52,7 @@ TODO
 -> Added Technique Texts and new method "show-sib-technique-texts" 
 
 -> om->sib (third input) supports now numbers (articulations) or strings (technique)
+
+-> Multiple articulations and/or texts for the same note is now supported
+
+-> New Tutorials
