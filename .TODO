@@ -11,48 +11,12 @@ TODO
 ****************************
 * UPDATES FOR NEXT RELEASE *
 ****************************
- 
--> Corrected time signature changes (only occurs for voice number 1)
-   OBS: For now, Sibelius does not support multiple simultaneous time signatures and multiple simultaneous tempi.
 
--> Minor correction in the documentation string of show-sib-lines.
 
--> Added method SEARCH-SIB-INSTRUMENT (example patch 03 also updated)
+- Added method split-voice-by-clef 
 
--> Fixed lines (removed from measure loop)
+- New documentation patch 
 
--> Added EXTRAS (add-sib-articulations, add-extra-vel, mk-line)
+- Fixed print-sib-text 
 
--> Added new example patch (Messiaen - Mode de Valeurs)
-
--> Added composer's name (from OM preferences) to the final score (function get-composer-name)
-
--> Added function get-score-title (from OMPatch title)
-
--> Added Title
-
--> Changes in Sibelius plugin:
-   - Removed Close All Active Scores (if there is no staves in the Active Score, there's no need to create a new scores
-   - Removed text warnings
-   - Added Technique Texts
-   - Changed Dynamic Positions (currentNote.NoteRest.Position)
-
--> Fixed Title for Windows users (thanks to K.Haddad)
-
--> Removed warning when instrument is NULL
-
--> Fixed search-instrument (string-downcase)
-
--> Changed *approx-midic* (new function: get-approx-midic -> OM global variable)
-
--> Quarter tones support
-
--> Added warnings for polytempo and multiple time signatures at the same time
-
--> Added Technique Texts and new method "show-sib-technique-texts" 
-
--> om->sib (third input) supports now numbers (articulations) or strings (technique)
-
--> Multiple articulations and/or texts for the same note is now supported
-
--> New Tutorials
+- Added preferences (export options: dynamics, title, composer)
