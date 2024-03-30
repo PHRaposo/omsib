@@ -434,6 +434,8 @@ and the line style accepted by Sibelius Manuscript Language."
   (setf *mesure-num* 0)
   (setf *voice-num* 1)
   (setf *score-number-of-measures* (om::list-max (get-number-of-measures voice)))
+  (get-def-midic-approx)
+  (setf *score-title* (om::name (om::associated-box voice)))
   (when (> *approx-midic* 4) (setf *approx-midic* 4))
   (loop for elt in (cons-sib-text voice (list "unnamed (treble staff)" nil nil) (list articulations lines)) do (print elt)))
 
@@ -511,6 +513,25 @@ and the line style accepted by Sibelius Manuscript Language."
                      t)))
 (if (null dialog)
     (om::om-abort))))
+
+(defun remove-dyn-title-composer?  (sib-lists dyn? title? composer?)
+(let (res)
+(setf res sib-lists)
+(if (not dyn?)
+ (setf res (remove-if #'(lambda (x) 
+                     (or (equal (subseq x 0 1) "y")  
+                           (equal (subseq x 0 1) "v")))
+  res)))
+(if (not title?) 
+ (setf res (remove-if #'(lambda (x) 
+                                   (equal (subseq x 0 1) "I"))
+                 res)))
+(if (not composer?) 
+    (setf res (remove-if #'(lambda (x) 
+                                       (equal (subseq x 0 1) "C"))
+                    res)))    
+res))
+ 
 	 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -548,7 +569,7 @@ and the line style accepted by Sibelius Manuscript Language."
           (setf rep (append rep (cons-sib-text staff (nth i instruments) (nth i articulations-lines))))))
 
    (progn (setf *score-tile* nil)
-              (om::save-data (mapcar #'list (om::flat rep))))))
+              (om::save-data (mapcar #'list (remove-dyn-title-composer? (om::flat rep) om::*sib-dyn-on*  om::*sib-tit-on* om::*sib-comp-on*))))))
 
 (defun cons-voice-positions-and-durations (voice)
  (let* ((tree (om::tree voice))
@@ -1041,6 +1062,66 @@ Note that this method relies on OM Add-extras that still in development. Only us
  :doc "This function create line arguments from a voice, the initial chord, the end chord and line."
  (let ((positions (get-chord-posn-for-lines self chord1 chord2)))
  (mapcar #'(lambda (posn) (om::x-append posn line)) positions)))
+
+ (om::defmethod! split-voice-by-clef ((self om::voice))
+ :initvals '( nil)
+ :indoc '("voice")
+ :icon 99 
+ :doc "This method splits a voice into a list of voice objects, one for each clef (ff f g gg)."
+ (let* ((chords (om::get-chords self))
+        (velocities (loop for chord in chords collect (om::lvel chord)))
+        (ratios (om::tree2ratio (om::tree self)))
+        (filter-ambitus 
+         (loop for chord in chords
+                  collect (let ((midics (om::lmidic chord)))
+                             (loop for note in midics
+                                      collect  (cond 
+                                                       ((< note 3600) (list note nil nil nil))
+                                                       ((and (>= note 3600) (< note 6000)) (list nil note nil nil))
+                                                        ((and (>= note 6000) (< note 8400)) (list nil nil note nil))
+                                                        ((>= note 8400) (list nil nil nil note))
+                                                        (t (progn (om::om-message-dialog "THIS SHOULDN'T HAPPEN") (om::om-abort))))))))
+        (filter-clefs (om::mat-trans (loop for chord in filter-ambitus
+                                                   collect (loop for staff in chord
+                                                                 collect (first staff) into ff
+                                                                 collect (second staff) into f
+                                                                 collect (third staff) into g
+                                                                 collect (fourth staff) into gg
+                                                                 finally (return (list ff f g gg))))))
+        (split (loop for staff in filter-clefs
+                     if (every #'null (om::flat staff)) 
+                       collect nil
+                     else
+                       collect (loop for new-chord in staff
+                                     for ratio in ratios
+                                     for vel in velocities
+                                     collect (if (every #'null new-chord)
+                                                 (list (* -1 ratio) nil)
+                                                 (let ((vel-posn (loop for el in new-chord 
+                                                                                for x from 0
+                                                                               when el
+                                                                              collect x)))
+                                                   (list ratio (remove nil new-chord) (om::posn-match vel vel-posn))))))))
+(reverse 
+ (remove nil 
+  (loop for new-voice in split
+         collect 
+         (if (null new-voice)
+              nil
+             (let* ((new-ratios (mapcar #'first new-voice))
+                     (new-midics (remove nil (mapcar #'second new-voice)))
+                     (new-vels (mapcar #'third new-voice))
+                     (new-chords (loop for midics in new-midics
+                                                   for vel in new-vels
+                                                  collect (om::make-instance 'om::chord :lmidic midics :lvel vel))))
+                                                             
+                                                            
+                     
+               (make-instance 'om::voice :tree (om::mktree (om::flat new-ratios) (om::get-time-sig self))
+                                                   :chords new-chords
+                                                   :tempo (om::tempo self)
+                                                   :legato (om::legato self)
+                                                   :ties (om::ties self)))))))))
 
  ;;; EXPORT 
 
