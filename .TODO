@@ -8,6 +8,8 @@ TODO
 
 - ADD-EXTRAS TO OM OBJECTS (articulations, dynamics, texts)
 
+- REWRITE README - CREATE .PNG FILES (SCREENSHOTS)
+
 ****************************
 * UPDATES FOR NEXT RELEASE *
 ****************************
@@ -20,3 +22,5 @@ TODO
 - Fixed print-sib-text 
 
 - Added preferences (export options: dynamics, title, composer)
+
+- minor corrections in the code (fixed variables definitions, not referenced variables, etc. - NO COMPILING WARNINGS NOW)
