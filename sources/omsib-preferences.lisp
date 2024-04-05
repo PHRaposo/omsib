@@ -62,7 +62,7 @@
                       (om-make-dialog-item 'om-static-text (om-make-point 50 i) (om-make-point 120 20) "Title"
                                           :font *controls-font*)
 
-                     (om-make-dialog-item 'om-check-box (om-make-point 165 i) (om-make-point 30 10) ""
+                     (om-make-dialog-item 'om-check-box (om-make-point 165 i) (om-make-point 30 20) ""
                                           :font *controls-font*
                                           :checked-p (get-pref modulepref :sib-tit-on)
                                           :di-action (om-dialog-item-act item 
@@ -71,7 +71,7 @@
                    (om-make-dialog-item 'om-static-text (om-make-point 50 (incf i 40)) (om-make-point 120 20) "Composer"
                                        :font *controls-font*)
 
-                  (om-make-dialog-item 'om-check-box (om-make-point 165 i) (om-make-point 30 10) ""
+                  (om-make-dialog-item 'om-check-box (om-make-point 165 i) (om-make-point 30 20) ""
                                        :font *controls-font*
                                        :checked-p (get-pref modulepref :sib-comp-on)
                                        :di-action (om-dialog-item-act item 
@@ -80,7 +80,7 @@
                   (om-make-dialog-item 'om-static-text (om-make-point 50 (incf i 40)) (om-make-point 120 20) "Dynamics"
                                     :font *controls-font*)
 
-                 (om-make-dialog-item 'om-check-box (om-make-point 165 i) (om-make-point 30 10) ""
+                 (om-make-dialog-item 'om-check-box (om-make-point 165 i) (om-make-point 30 20) ""
                                     :font *controls-font*
                                     :checked-p (get-pref modulepref :sib-dyn-on)
                                     :di-action (om-dialog-item-act item 
