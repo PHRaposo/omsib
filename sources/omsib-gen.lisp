@@ -16,7 +16,7 @@
 
 ;(defvar *score-composer* nil) 
 (defvar *score-title* nil)
-	
+
 (defvar *approx-midic* nil)
 
 ;(defvar *sib-chan-on* nil)
@@ -209,9 +209,11 @@ and the instrument type accepted by Sibelius Manuscript Language."
 
 (defun print-sib-instruments ()
 (let (instruments)
-(maphash #'(lambda (x y) (setq instruments (if (null instruments) 
-				                       (format nil "~a" x)
-						       (format nil (concatenate 'string instruments "~%~a") x))))
+(maphash #'(lambda (x y)
+           (declare (ignore y))
+		   (setq instruments (if (null instruments) 
+				                 (format nil "~a" x)
+						         (format nil (concatenate 'string instruments "~%~a") x))))
 *sib-instruments-hash*)
 (om::om-show-output-lines (format nil "~a" instruments) "INSTRUMENTS")))
 
@@ -229,6 +231,7 @@ a list of list with these two arguments."
 (defun get-user-instrument (prompt &key (initial-string "") owner 
                                  (size (om::om-make-point 600 100))
                                  (position (om::om-make-point 200 140)))
+ (declare (ignore owner size position))								 
  (om-api::prompt-for-string  prompt :initial-value initial-string :title "Search Instrument"))
 	 
 (defun search-sib-instruments (&optional name)
@@ -236,7 +239,8 @@ a list of list with these two arguments."
 	 	        (string-downcase name)
 	 	       (string-downcase (get-user-instrument "Type an instrument name:"))))
 	   (found '()))
-  (maphash #'(lambda (name id) 
+  (maphash #'(lambda (name id)
+              (declare (ignore id))
  	          (when (search str name) 
 				    (setq found (append (list name) found)) 
 					))
@@ -281,15 +285,18 @@ and the line style accepted by Sibelius Manuscript Language."
 
 (defun print-sib-lines ()
 (let (lines)
-(maphash #'(lambda (x y) (setq lines (if (null lines) 
-										 (format nil "~a" x)
-										 (format nil (concatenate 'string lines "~%~a") x))))
+(maphash #'(lambda (x y) 
+	(declare (ignore y))
+	(setq lines (if (null lines) 
+				(format nil "~a" x)
+				(format nil (concatenate 'string lines "~%~a") x))))
  *sib-lines-hash*)
 (om::om-show-output-lines (format nil "~a" lines) "LINES")))
 
 (defun get-chord-posn-for-lines (voice chord1 chord2)
 (let* ((chords (remove-if #'om::rest-p (om::collect-chords voice)))
-         temp-posn)
+         ;temp-posn
+		 )
 (om::mat-trans 
  (mapcar #'(lambda (lst)
                  (remove nil lst))
@@ -389,8 +396,9 @@ and the line style accepted by Sibelius Manuscript Language."
 
      (t 
 
-(let ((pos (length rep))
+(let (;(pos (length rep))
             (depth 0))
+
         (loop for obj in inside do
               (setf rep (list (om::list! rep) (let* ((operation (/ (/ (om::extent obj) (om::qvalue obj)) 
                                                          (/ (om::extent self) (om::qvalue self))))
@@ -438,22 +446,7 @@ and the line style accepted by Sibelius Manuscript Language."
   (setf *score-title* (om::name (om::associated-box voice)))
   (when (> *approx-midic* 4) (setf *approx-midic* 4))
   (loop for elt in (cons-sib-text voice (list "unnamed (treble staff)" nil nil) (list articulations lines)) do (print elt)))
-
-;(defun get-score-title ()
-; (string-trim ".omp"
-;  (file-namestring 
-;   (car (remove nil
-;   (loop for i in (om::elements om::*current-workspace*)
-;         collect (if (om::editorframe i)
-;                     (om::mypathname i))))))))
-					 
-;(om::mypathname (om::obj (om::om-front-window))))))
-  
-;(defun get-user-score-title (prompt &key (initial-string "") owner
-;                               (size (om::om-make-point 600 100))
-;                               (position (om::om-make-point 200 140)))
-; (om-api::prompt-for-string  prompt :initial-value initial-string :title "Choose a title:"))
-													
+												
 ;;;for extras
 ;(defun massq (item list)
 ;(format nil "~S" (cdr (assoc item list :test 'equal))))  
@@ -539,16 +532,18 @@ res))
 ;;;;;;;;;;;;;DA CODE;;;;;;;;;;;;;;;
 ;;;;where everything is transcribed
 
-;;; POLY 
+;<<<>>>*****<<<>>>*****<<<>>>;
+;*****<<<>>> POLY <<<>>>*****;
 
 (defmethod cons-sib-text ((self om::poly) instruments articulations-lines)
   (let ((rep '())
         (voices (om::inside self))
-        (articulations-lines (om::mat-trans articulations-lines)))
-	 
-  (if (= 1 (length voices))
-      (setf *score-title* (om::name (om::associated-box (car voices))))
-      (setf *score-title* (om::name (om::associated-box self))))
+        (articulations-lines (om::mat-trans articulations-lines))
+		)
+
+ (setf *score-title* (if (= 1 (length voices)) 
+	 	                      (om::name (om::associated-box (car voices)))
+                              (om::name (om::associated-box self))))
 	  
   (unless (= 1 (length voices))
 	      (progn (check-tempos voices)
@@ -568,8 +563,8 @@ res))
           (setf *voice-num* (incf *voice-num*))
           (setf rep (append rep (cons-sib-text staff (nth i instruments) (nth i articulations-lines))))))
 
-   (progn (setf *score-tile* nil)
-              (om::save-data (mapcar #'list (remove-dyn-title-composer? (om::flat rep) om::*sib-dyn-on*  om::*sib-tit-on* om::*sib-comp-on*))))))
+   (progn (setf *score-title* nil)
+          (om::save-data (mapcar #'list (remove-dyn-title-composer? (om::flat rep) om::*sib-dyn-on*  om::*sib-tit-on* om::*sib-comp-on*))))))
 
 (defun cons-voice-positions-and-durations (voice)
  (let* ((tree (om::tree voice))
@@ -609,7 +604,8 @@ res))
   (setf *measure-note-durations* sibelius-durs)
    sibelius-positions)))
 
-;;; VOICE 
+;<<<>>>*****<<<|>>>*****<<<>>>;
+;*****<<<>>> VOICE <<<>>>*****;
 	   
 (defmethod cons-sib-text ((self om::voice) instrument articulations-lines)
   (setf *mesure-num* 0)
@@ -687,7 +683,8 @@ res))
 ;real-beat-val= For the same key sign, this will be the halfnote of a triplet (blanche de triolet)
 ;These refer to the beats in a measure, and for special cases using non-standard key signature
 
-;;; MEASURE 
+;<<<>>>*****<<<|-|>>>*****<<<>>>;
+;*****<<<>>> MEASURE <<<>>>*****;
 
 (defmethod cons-sib-text ((self om::measure) lastmes tempo)
   (setf *chords-and-cont* (om::collect-chords  self))
@@ -728,6 +725,9 @@ res))
 	              (second el)
 	              (parse-integer (subseq (third el) 1)))))
 
+;<<<>>>*****<<<->>>*****<<<>>>;
+;*****<<<>>> GROUP <<<>>>*****;
+				  
 (defmethod cons-sib-text ((self om::group) dur tempo)
   (let* ((durtot (if (listp dur) (car dur) dur))
          (cpt (if (listp dur) (cadr dur) 0))
@@ -756,14 +756,19 @@ res))
                                        (cons-sib-text obj (* dur-obj unite) nil))))))
      
      (t
-      (let ((pos (length rep))
+      (let* (;(pos (length rep))<== not used in omisb
             (depth 0) 
             (tree (om::tree self))
-             nested?)
-        (if (om::ratiop (car tree))
-            (progn (setf nested? t) 
-                       (incf *tuplet-depth*))
-            (setf *tuplet-depth* 0))
+            (nested? (om::ratiop (car tree)))
+			;nested?
+			)
+			(if nested? (incf *tuplet-depth*)
+			            (setf *tuplet-depth* 0))
+						
+		;(if (om::ratiop (car tree))
+        ;    (progn (setf nested? t) 
+        ;               (incf *tuplet-depth*))
+        ;    (setf *tuplet-depth* 0))
 
         (setf rep (append rep  (list 
                                 (if (= *tuplet-depth* 0)
@@ -785,6 +790,7 @@ res))
                                                          (/ (om::extent self) (om::qvalue self))))
                                            (dur-obj (numerator operation))
                                            exp tmp)
+									  
                                       (setf dur-obj (* dur-obj (/ num (denominator operation))))
                                       (setf tmp (multiple-value-list 
                                                  (cons-sib-text obj (list (* dur-obj unite) cpt) nil)))
@@ -804,7 +810,8 @@ res))
                                                                           collect (let* ((operation (/ (/ (om::extent obj) (om::qvalue obj)) 
                                                                                                                   (/ (om::extent self) (om::qvalue self))))
                                                                                              (dur-obj (numerator operation))
-                                                                                              exp tmp)
+                                                                                             ;exp tmp
+																							  )
                                                                                       (setf dur-obj (* dur-obj (/ num (denominator operation))))
                                                                                        (* dur-obj unite))))))
               (tuplet-positions (mapcar #'first rep))
@@ -846,19 +853,20 @@ res))
   (loop for i in liste
         collect (if (om::vel-extra-p i) (om::thechar i)))))
 
-;;; CHORD-NOTE
+;<<<>>>*****<<<|----|>>>*****<<<>>>;
+;*****<<<>>> CHORD-NOTE <<<>>>*****;
 	 
 (defmethod cons-sib-text ((self om::chord) dur tempo)
   (let* ((notes (om::inside self))
          (extra (car (mapcar #'om::extra-obj-list notes)))
          (text (get-extra-text extra))
-         (velex (if (om::vel-extra-p (car extra))
-                    (om::thechar (car extra))))
+         ;(velex (if (om::vel-extra-p (car extra)) <== not used in omsib
+         ;           (om::thechar (car extra)))) <== not used in omsib
          (durtot (if (listp dur) (car dur) dur))
          (inside (om::inside self))
          (vel (car (om::lvel self)))
          (dyn (get-dyn-from-om vel))
-         (chans (om::lchan self))
+         ;(chans (om::lchan self)) <== not used in omsib
          (sib-posn (pop *measure-note-positions*))
          (sib-dur (pop *measure-note-durations*))
          (tup? *tuplet-note*)
@@ -898,13 +906,15 @@ res))
 (list rep)
 ))
 
-;;; REST 
+;<<<>>>*****<<<>>>*****<<<>>>;
+;*****<<<>>> REST <<<>>>*****;
 
 (defmethod cons-sib-text ((self om::rest) dur tempo)
  (let ((durtot (if (listp dur) (car dur) dur))
 	 (sib-dur (pop *measure-note-durations*))
  	(sib-posn (pop *measure-note-positions*))
         (tup? *tuplet-note*))
+  (declare (ignore sib-dur))
   (when tup? (list (list sib-posn (* durtot 1024))))))	
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
