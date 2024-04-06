@@ -48,12 +48,13 @@
                                  :bg-color *om-light-gray-color*
                                  ))
         (l1 50)
-	(l2 (round (om-point-h (get-pref-scroll-size)) 2))
-	(l3 (- (om-point-h (get-pref-scroll-size)) 60))
+	;(l2 (round (om-point-h (get-pref-scroll-size)) 2)) <== not used in omsib
+	;(l3 (- (om-point-h (get-pref-scroll-size)) 60)) <== not used in omsib
         (i 40)
         (posy 0)
-	(dy 40)
-        outtxt tmptxt)
+	;(dy 40) <== not used in omsib
+    ;outtxt tmptxt  <== not used in omsib
+		)
     
     (om-add-subviews thescroll 
          			  (om-make-dialog-item 'om-static-text (om-make-point l1 (incf posy 5)) (om-make-point 200 30) "Export:"
