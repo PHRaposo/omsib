@@ -14,13 +14,3 @@ TODO
 * UPDATES FOR NEXT RELEASE *
 ****************************
 
-
-- Added method split-voice-by-clef 
-
-- New documentation patch 
-
-- Fixed print-sib-text 
-
-- Added preferences (export options: dynamics, title, composer)
-
-- minor corrections in the code (fixed variables definitions, not referenced variables, etc. - NO COMPILING WARNINGS NOW)
