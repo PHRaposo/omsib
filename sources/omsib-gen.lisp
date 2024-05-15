@@ -1185,7 +1185,7 @@ ARGUMENTS:
 
  (om::defmethod! show-sib-technique-texts ()
   :icon 99 
-  :doc "This function opens a documentation window containing all available lines."
+  :doc "This function opens a documentation window containing all available technique texts."
   (print-sib-technique-texts))
 
 ;;; EOF
