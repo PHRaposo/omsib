@@ -38,7 +38,7 @@
 (defvar *mesure-num* 0)
 (defvar *tuplet-note* nil)
 (defvar *tuplet-position* nil)
-(defvar *tuplet-depth* nil)
+(defvar *tuplet-depth* 0)
    
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; EXTRAS
@@ -727,7 +727,7 @@ res))
 
 ;<<<>>>*****<<<->>>*****<<<>>>;
 ;*****<<<>>> GROUP <<<>>>*****;
-				  
+	  
 (defmethod cons-sib-text ((self om::group) dur tempo)
   (let* ((durtot (if (listp dur) (car dur) dur))
          (cpt (if (listp dur) (cadr dur) 0))
@@ -739,14 +739,13 @@ res))
          (inside (om::inside self))
          (sympli (/ num denom))
          (rep nil) (val nil))
-    ;(print durtot)
     (cond
-     ((not (om::get-group-ratio self))
+     ((not (om::get-group-ratio self)) 
       (loop for obj in inside
             do (setf rep (append rep (let* ((dur-obj (/ (/ (om::extent obj) (om::qvalue obj)) 
                                                         (/ (om::extent self) (om::qvalue self)))))
                                        (cons-sib-text obj (* dur-obj durtot) nil))))))
-     ((= sympli 1)
+     ((= sympli 1)  
       (loop for obj in inside
             do (setf rep (append rep (let* ((operation (/ (/ (om::extent obj) (om::qvalue obj)) 
                                                           (/ (om::extent self) (om::qvalue self))))
@@ -756,20 +755,12 @@ res))
                                        (cons-sib-text obj (* dur-obj unite) nil))))))
      
      (t
-      (let* (;(pos (length rep))<== not used in omisb
-            (depth 0) 
+      (let* ((depth 0) 
             (tree (om::tree self))
-            (nested? (om::ratiop (car tree)))
-			;nested?
-			)
-			(if nested? (incf *tuplet-depth*)
-			            (setf *tuplet-depth* 0))
-						
-		;(if (om::ratiop (car tree))
-        ;    (progn (setf nested? t) 
-        ;               (incf *tuplet-depth*))
-        ;    (setf *tuplet-depth* 0))
-
+            (nested? (not (member (denominator (car tree)) 
+                                 '(1 2 4 8 16 32 64 128 256 512 1024 2048))))
+	    )
+	(when nested? (incf *tuplet-depth*))
         (setf rep (append rep  (list 
                                 (if (= *tuplet-depth* 0)
                                     (list (format nil "o~d" (first *measure-note-positions*))
@@ -783,62 +774,58 @@ res))
 				          (format nil "k~d" (* unite 1024))
                                           (format nil "T~d" *tuplet-depth*))
                                   ))))
-          
         (loop for obj in inside do
               (setf *tuplet-note* t)
               (setf rep (append rep (let* ((operation (/ (/ (om::extent obj) (om::qvalue obj)) 
                                                          (/ (om::extent self) (om::qvalue self))))
                                            (dur-obj (numerator operation))
-                                           exp tmp)
-									  
+                                           exp tmp)					  
                                       (setf dur-obj (* dur-obj (/ num (denominator operation))))
                                       (setf tmp (multiple-value-list 
                                                  (cons-sib-text obj (list (* dur-obj unite) cpt) nil)))
-                                      (setf exp (car tmp))                                              
+                                      (setf exp (car tmp))                 
                                       (when (and (cadr tmp) (> (cadr tmp) depth))
-                                                 (progn (setf depth (cadr tmp))
-                                                   (decf *tuplet-depth*)))
+                                                 (progn (setf depth (cadr tmp)))) 
                                       exp
                                       )))
                (setf *tuplet-note* nil))
-
         (setf val (+ depth 1))
-
-        (let* ((tuplet-durs (if (= depth 0)
-                                        (get-sibnote-durs rep)
-                                        (om::om* 1024 (loop for obj in inside
-                                                                          collect (let* ((operation (/ (/ (om::extent obj) (om::qvalue obj)) 
-                                                                                                                  (/ (om::extent self) (om::qvalue self))))
-                                                                                             (dur-obj (numerator operation))
-                                                                                             ;exp tmp
-																							  )
-                                                                                      (setf dur-obj (* dur-obj (/ num (denominator operation))))
-                                                                                       (* dur-obj unite))))))
+        (let* ((tuplet-durs (cond ((and (= depth 0) (> *tuplet-depth* 0)) (get-sibnote-durs rep))
+                                  ((and (= depth 0) (= *tuplet-depth* 0)) (get-sibnote-durs rep))
+                                  (t (om::om* 1024 (loop for obj in inside
+                                                          collect (let* ((operation (/ (/ (om::extent obj) (om::qvalue obj)) 
+                                                                                       (/ (om::extent self) (om::qvalue self))))
+                                                                         (dur-obj (numerator operation))
+									 )
+                                                                   (setf dur-obj (* dur-obj (/ num (denominator operation))))
+                                                                   (* dur-obj unite))))))) 
               (tuplet-positions (mapcar #'first rep))
-              (tuplet-positions (om::om- (butlast (om::dx->x (second tuplet-positions) tuplet-durs)) (second tuplet-positions)))
-              )
+              (start (if (= 0 *tuplet-depth*) (parse-integer (subseq (car tuplet-positions) 1)) (second tuplet-positions)))
+              (tuplet-positions (om::om- (butlast (om::dx->x start tuplet-durs)) start))  
+              )  
           (setf rep (let ((n-nested (apply #'+ (loop for el in rep when (equal "?" (car el)) collect 1)))
-                               (count 1))
-                         (loop for el in rep 
-                                   if (= (length el) 2)
-                                       collect (pop tuplet-positions) 
-                                       into rests
-                                   else
-                                       collect (cond ((every #'stringp el)
-                                                              (cond ((equal (first el) "?")
-                                                                         (if (= depth 0)
-                                                                              el
-                                                                             (if (= count n-nested)
-                                                                                 (om::subs-posn el '(0) (format nil "n~d" (pop tuplet-positions)))
-                                                                                 (progn (incf count) el))))
-                                                                         (t el)))
-                                                             (t (om::subs-posn el '(0) (format nil "p~d" (pop tuplet-positions)))))
+                               (count 0)) 
+                     (loop for el in rep
+                           if (= (length el) 2)
+                              collect (pop tuplet-positions) 
+                              into rests
+                              else
+                              collect (cond ((every #'stringp el)
+                                             (cond ((and (equal (first el) "?") (= *tuplet-depth* 0)) 
+                                                    (om::subs-posn el '(0) (format nil "n~d" (pop tuplet-positions))))
+                                                    ((equal (first el) "?")
+                                                      (if (> count 0)
+                                                          (om::subs-posn el '(0) (format nil "n~d" (pop tuplet-positions)))
+                                                          (progn (incf count) el)))    
+                                                   (t el)))
+                                            (t  (om::subs-posn el '(0) (format nil "p~d" (pop tuplet-positions)))))
                                        into args
                                   finally (return args))))
-          )
-          
+          ) 
+        (when (> *tuplet-depth* 0) (decf *tuplet-depth*)) 
         )
       ))
+
     (values rep val)
 ))
 
