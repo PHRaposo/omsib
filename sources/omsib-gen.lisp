@@ -5,7 +5,7 @@
 ;;;     2024 - by Paulo Raposo
 ;;;
 ;;;      ADAPTED FROM: OM2Lily 2.0 v1.1
-;;;      © 2005 IRCAM - Karim Haddad
+;;;      Â© 2005 IRCAM - Karim Haddad
 ;;;
 ;;; ====================================================================
 
@@ -791,14 +791,24 @@ res))
                (setf *tuplet-note* nil))
         (setf val (+ depth 1))
         (let* ((tuplet-durs (cond ((and (= depth 0) (> *tuplet-depth* 0)) (get-sibnote-durs rep))
-                                  ((and (= depth 0) (= *tuplet-depth* 0)) (get-sibnote-durs rep))
+                                  ((and (= depth 0) (= *tuplet-depth* 0))
+                                   (remove nil
+                                    (loop for el in rep 
+                                          collect (cond ((equal (car el) "?")
+                                                         (* (parse-integer (subseq (third el) 1)) 
+                                                            (parse-integer (subseq (fourth el) 1))))
+                                                        ((numberp (car el))
+                                                         (if (= (length el) 2) 
+                                                             (second el)
+                                                             (parse-integer (subseq (third el) 1))))
+                                                        (t nil)))))
                                   (t (om::om* 1024 (loop for obj in inside
-                                                          collect (let* ((operation (/ (/ (om::extent obj) (om::qvalue obj)) 
-                                                                                       (/ (om::extent self) (om::qvalue self))))
-                                                                         (dur-obj (numerator operation))
-									 )
-                                                                   (setf dur-obj (* dur-obj (/ num (denominator operation))))
-                                                                   (* dur-obj unite))))))) 
+                                                        collect (let* ((operation (/ (/ (om::extent obj) (om::qvalue obj)) 
+                                                                                     (/ (om::extent self) (om::qvalue self))))
+                                                                       (dur-obj (numerator operation))
+								       )
+                                                                (setf dur-obj (* dur-obj (/ num (denominator operation))))
+                                                                (* dur-obj unite))))))) 
               (tuplet-positions (mapcar #'first rep))
               (start (if (= 0 *tuplet-depth*) (parse-integer (subseq (car tuplet-positions) 1)) (second tuplet-positions)))
               (tuplet-positions (om::om- (butlast (om::dx->x start tuplet-durs)) start))  
