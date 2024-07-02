@@ -3,6 +3,8 @@
 Export scores from OpenMusic to Avid Sibelius Software.
 
 This is the beta release of the library.
+
+
 By Paulo Raposo.
 
 The majority of the code was adapted from Omlily library by Karim Haddad (IRCAM).
