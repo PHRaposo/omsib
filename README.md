@@ -1,4 +1,4 @@
-# OMSIB LIBRARY
+# OMSIB LIBRARY - BETA 3
 
 Export scores from OpenMusic to Avid Sibelius Software.
 
@@ -11,6 +11,13 @@ The majority of the code was adapted from Omlily library by Karim Haddad (IRCAM)
 
 With OMSIB it is possible to export voice or poly objects as a text file (.txt) and read them in Avid Sibelius Software using an external plugin (included in the /resources/plugin/ folder of this repository).
 
+
+LISP DEPENDENCIES: 
+
+
+[PARSE-NUMBER](https://github.com/sharplispers/parse-number)
+
+
 PLUGIN INSTALLATION
 
  The entire plugin folder (OpenMusic to Sibelius) should be placed in the Sibelius plugins folder.
@@ -20,6 +27,4 @@ PLUGIN INSTALLATION
 -> For Mac: /Users/[My Username]/Library/Application\ Support/Avid/Sibelius/Plugins
 
 # [Download](https://github.com/PHRaposo/omsib/archive/refs/heads/main.zip)
-
-
 
