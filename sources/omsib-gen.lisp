@@ -38,8 +38,9 @@
 (defvar *mesure-num* 0)
 (defvar *tuplet-note* nil)
 ;(defvar *tuplet-position* nil)
-(defvar *tuplet-depth* 0)
-   
+(defvar *tuplet-depth* nil)
+(setf *tuplet-depth* 0) 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; EXTRAS
 
@@ -723,11 +724,11 @@ res))
 	  when (not (every #'stringp el))	 
 	  collect (if (= (length el) 2)
 	              (second el)
-	              (parse-integer (subseq (third el) 1)))))
+                      (parse-number::parse-number (subseq (third el) 1)))))
 
 ;<<<>>>*****<<<->>>*****<<<>>>;
 ;*****<<<>>> GROUP <<<>>>*****;
-	  
+
 (defmethod cons-sib-text ((self om::group) dur tempo)
   (let* ((durtot (if (listp dur) (car dur) dur))
          (cpt (if (listp dur) (cadr dur) 0))
@@ -756,27 +757,23 @@ res))
                                        (cons-sib-text obj (* dur-obj unite) nil))))))
      
      (t 
-      (let* ((depth 0) 
-             (tree (om::tree self))
-             (nested? (not (member (denominator (car tree))
-                                  '(1 2 4 8 16 32 64 128 256 512 1024 2048))))
-	     )
-        
-	(when nested? (incf *tuplet-depth*))
-
-        (setf rep (append rep  (list 
-                                (if (= *tuplet-depth* 0)
-                                    (list (format nil "o~d" (first *measure-note-positions*))
-				          (format nil "w~d" num)
-				          (format nil "q~d" denom)
-				          (format nil "c~d" (* unite 1024))
-                                          (format nil "T~d" *tuplet-depth*))
-                                  (list "?"
+      (let* ((depth 0))
+          (setf rep (append rep (list 
+                                 (if (= *tuplet-depth* 0)
+                                     (list (format nil "o~d" (first *measure-note-positions*))
+				           (format nil "w~d" num)
+				           (format nil "q~d" denom)
+				           (format nil "c~d" (* unite 1024))
+                                           (format nil "T~d" *tuplet-depth*))
+                                     (list "?"
 				          (format nil "z~d" num)
 				          (format nil "j~d" denom)
 				          (format nil "k~d" (* unite 1024))
                                           (format nil "T~d" *tuplet-depth*))
                                   ))))
+
+        (incf *tuplet-depth*)
+
         (loop for obj in inside do
               (setf *tuplet-note* t)
               (setf rep (append rep (let* ((operation (/ (/ (om::extent obj) (om::qvalue obj)) 
@@ -786,30 +783,30 @@ res))
                                       (setf dur-obj (* dur-obj (/ num (denominator operation))))
                                       (setf tmp (multiple-value-list 
                                                  (cons-sib-text obj (list (* dur-obj unite) cpt) nil)))
-                                      (setf exp (car tmp))              
+                                      (setf exp (car tmp))
                                       (when (and (cadr tmp) (> (cadr tmp) depth))
-                                                 (progn (setf depth (cadr tmp))
-                                                   )) 
+                                        (setf depth (cadr tmp)))
                                       exp
                                       )))
-               (setf *tuplet-note* nil))
+              (setf *tuplet-note* nil))
 
-        (setf val (+ depth 1))
+        (setf val (1- *tuplet-depth*))
 
         (let* ((tuplet-durs (cond ((and (= depth 0)
-                                        (> *tuplet-depth* 0))
+                                        (> *tuplet-depth* 1))
                                    (get-sibnote-durs rep))
                                   ((and (= depth 0) 
-                                        (= *tuplet-depth* 0))
+                                        (= *tuplet-depth* 1))
                                    (remove nil
                                     (loop for el in rep 
-                                          collect (cond ((equal (car el) "?")
-                                                         (* (parse-integer (subseq (third el) 1)) 
-                                                            (parse-integer (subseq (fourth el) 1))))
+                                          collect (cond 
+                                                        ((equal (car el) "?")
+                                                         (* (parse-number::parse-number (subseq (third el) 1))
+                                                            (parse-number::parse-number (subseq (fourth el) 1))))
                                                         ((numberp (car el))
                                                          (if (= (length el) 2) 
                                                              (second el)
-                                                             (parse-integer (subseq (third el) 1))))
+                                                             (parse-number::parse-number (subseq (third el) 1))))
                                                        (t nil)))))
                                   (t (om::om* 1024 (loop for obj in inside
                                                          collect (let* ((operation (/ (/ (om::extent obj) (om::qvalue obj)) 
@@ -819,7 +816,9 @@ res))
                                                                   (setf dur-obj (* dur-obj (/ num (denominator operation))))
                                                                   (* dur-obj unite)))))))  
               (tuplet-positions (mapcar #'first rep))
-              (start (if (= 0 *tuplet-depth*) (parse-integer (subseq (car tuplet-positions) 1)) (second tuplet-positions)))
+              (start (if (= 1 *tuplet-depth*) 
+                         (parse-number::parse-number (subseq (car tuplet-positions) 1))
+                         (second tuplet-positions)))
               (tuplet-positions (om::om- (butlast (om::dx->x start tuplet-durs)) start))  
               )
           (setf rep (let ((count 0)) 
@@ -829,7 +828,7 @@ res))
                            into rests
                            else
                            collect (cond ((every #'stringp el)
-                                          (cond ((and (equal (first el) "?") (= *tuplet-depth* 0))
+                                          (cond ((and (equal (first el) "?") (= *tuplet-depth* 1))
                                                  (om::subs-posn el '(0) (format nil "n~d" (pop tuplet-positions))))
                                                 ((equal (first el) "?")
                                                  (if (> count 0)
@@ -839,11 +838,10 @@ res))
                                          (t  (om::subs-posn el '(0) (format nil "p~d" (pop tuplet-positions)))))
                           into args
                           finally (return args))))
-          ) 
+          )
         (when (> *tuplet-depth* 0) (decf *tuplet-depth*))
         )
       ))
-
     (values rep val)
 ))
 
@@ -892,7 +890,7 @@ res))
                     (format nil "t~d" 1)  
                     (format nil "t~d" 0))
                      (if tup? "xTrue" "xFalse")
-                     (if tup? (format nil "X~a" *tuplet-depth*) "XFalse")
+                     (if tup? (format nil "X~a" (1- *tuplet-depth*)) "XFalse")
                     (when (not (equal dyn *tempdyn*))
                         (progn (setf *tempdyn* dyn)
                                (format nil "v~a" dyn)))
@@ -1140,19 +1138,6 @@ Note that this method relies on OM Add-extras that still in development. Only us
 
  ;;; EXPORT 
 
-(om::defmethod! om->sib ((score-object om::voice) &optional (instruments nil) (artic-or-text nil) (lines nil))
- :initvals '( nil nil nil nil)
- :indoc '("score" "list" "list of lists" "list of lists")
- :icon 99 
- :doc "This functions exports a voice or poly object to a text file (.txt) that should be import into Sibelius using the Import Data from OpenMusic plugin (included in the omsib/resources/ folder).
-ARGUMENTS:
-<INPUT 0> Voice, poly, chord-seq or multi-seq object.
-<INPUT 1> List of lists of sibelius instruments. For each voice this argument must include a list with two elements: the instrument longname and instrument shortname.
-<INPUT 2> List of lists of articulations or Technique texts. For each voice this argument must include a list of lists with two elements: a note position (starting on zero) and articulation number/text.
-<INPUT 3> List of lists of lines. For each voice this argument must include a list of lists containing three elements: the starting note, ending note and Line Style." 
-(let ((poly (om::make-instance 'om::poly :voices (list score-object))))
- (om->sib poly (list instruments) (list artic-or-text) (list lines))))
-
 (om::defmethod! om->sib ((score-object om::poly) &optional (instruments nil) (artic-or-text nil) (lines nil))
  :initvals '( nil nil nil nil)
  :indoc '("score" "list of lists" "list of lists" "list of lists")
@@ -1165,7 +1150,19 @@ ARGUMENTS:
 <INPUT 3> List of lists of lines. For each voice this argument must include a list of lists containing three elements: the starting note, ending note and Line Style." 
  (cons-sib-text score-object instruments (list artic-or-text lines)))
 
-;; IN-PROGRESS
+(om::defmethod! om->sib ((score-object om::voice) &optional (instruments nil) (artic-or-text nil) (lines nil))
+ :initvals '( nil nil nil nil)
+ :indoc '("score" "list" "list of lists" "list of lists")
+ :icon 99 
+ :doc "This functions exports a voice or poly object to a text file (.txt) that should be import into Sibelius using the Import Data from OpenMusic plugin (included in the omsib/resources/ folder).
+ARGUMENTS:
+<INPUT 0> Voice, poly, chord-seq or multi-seq object.
+<INPUT 1> List of lists of sibelius instruments. For each voice this argument must include a list with two elements: the instrument longname and instrument shortname.
+<INPUT 2> List of lists of articulations or Technique texts. For each voice this argument must include a list of lists with two elements: a note position (starting on zero) and articulation number/text.
+<INPUT 3> List of lists of lines. For each voice this argument must include a list of lists containing three elements: the starting note, ending note and Line Style." 
+(let ((poly (om::make-instance 'om::poly :voices (list score-object))))
+ (cons-sib-text poly (list instruments) (list (list artic-or-text) (list lines)))))
+
 (om::defmethod! om->sib ((score-object om::chord-seq) &optional (instruments nil) (artic-or-text nil) (lines nil))
  :initvals '( nil nil nil nil)
  :indoc '("score" "list" "list of lists" "list of lists")
@@ -1178,7 +1175,7 @@ ARGUMENTS:
 <INPUT 3> List of lists of lines. For each voice this argument must include a list of lists containing three elements: the starting note, ending note and Line Style." 
 (let ((poly (om::make-instance 'om::poly :voices (list (om::objfromObjs score-object (om::make-instance 'om::voice))))))
  (setf *score-title* (om::name (om::associated-box score-object)))
- (om->sib poly (list instruments) (list artic-or-text) (list lines))))
+ (cons-sib-text poly (list instruments) (list (list artic-or-text) (list lines)))))
 
 (om::defmethod! om->sib ((score-object om::multi-seq) &optional (instruments nil) (artic-or-text nil) (lines nil))
  :initvals '( nil nil nil nil)
@@ -1192,7 +1189,7 @@ ARGUMENTS:
 <INPUT 3> List of lists of lines. For each voice this argument must include a list of lists containing three elements: the starting note, ending note and Line Style." 
 (let ((poly (om::objfromObjs score-object (om::make-instance 'om::poly))))
  (setf *score-title* (om::name (om::associated-box score-object)))
- (om->sib poly (list instruments) (list artic-or-text) (list lines))))
+ (cons-sib-text poly (list instruments) (list (list artic-or-text) (list lines)))))
 
 ;;; DOC 
 
