@@ -8,13 +8,13 @@ TODO
 
 - EXTRA PREFERENCES FOR TUPLETS ? (style, bracket)
 
+- SIMPLIFY TUPLETS PROPORTIONS ? (in progress)
+
 ****************************
 * UPDATES FOR NEXT RELEASE *
 ****************************
 
 - FIXED preferences.lisp (removed duplicated variables definitions)
-
-- CHANGED OM->SIB to simplify tuplets proportions
 
 - CHANGED Sibelius Plugin (AddTuplet style and bracket arguments -> changed to strings)
 
