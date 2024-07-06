@@ -4,11 +4,17 @@ TODO
 
 - ADDITIONAL LINES (Accel. Rit., etc.)
 
-- ADD-EXTRAS TO OM OBJECTS (articulations, dynamics, texts)
+- CREATE .PNG FILES (SCREENSHOTS) FOR README
 
-- REWRITE README - CREATE .PNG FILES (SCREENSHOTS)
+- EXTRA PREFERENCES FOR TUPLETS ? (style, bracket)
 
 ****************************
 * UPDATES FOR NEXT RELEASE *
 ****************************
+
+- FIXED preferences.lisp (removed duplicated variables definitions)
+
+- CHANGED OM->SIB to simplify tuplets proportions
+
+- CHANGED Sibelius Plugin (AddTuplet style and bracket arguments -> changed to strings)
 
