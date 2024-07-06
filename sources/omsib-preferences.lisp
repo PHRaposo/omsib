@@ -4,13 +4,13 @@
 (in-package :om)
 
 (defvar *sib-dyn-on* nil)
-(defvar *sib-dyn-on* t)
+(setf *sib-dyn-on* t)
 
 (defvar *sib-tit-on* nil)
-(defvar *sib-tit-on* t)
+(setf *sib-tit-on* t)
 
 (defvar *sib-comp-on* nil)
-(defvar *sib-comp-on* t)
+(setf *sib-comp-on* t)
 
 (defmethod get-def-vals ((iconID (eql :omsib)))
    (list 
