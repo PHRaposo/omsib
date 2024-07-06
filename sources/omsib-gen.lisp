@@ -725,13 +725,13 @@ res))
 	              (second el)
                       (parse-number::parse-number (subseq (third el) 1)))))
 
-(defun change-tuplet-proportion (num denom unite)
+#|(defun change-tuplet-proportion (num denom unite)
  (let ((operation (if (and (evenp num) (om::power-of-two-p denom))
                               (list (/ num 2) (/ denom 2) (* unite 2))
                                nil)))
 (if operation
     (change-tuplet-proportion (first operation) (second operation) (third operation))
-    (list num denom unite))))
+    (list num denom unite))))|#
                       
 ;<<<>>>*****<<<->>>*****<<<>>>;
 ;*****<<<>>> GROUP <<<>>>*****;
@@ -765,22 +765,23 @@ res))
      
      (t 
       (let* ((depth 0)
-             (change-tup (change-tuplet-proportion num denom unite))
-             (new-num (car change-tup))
-             (new-denom (second change-tup))
-             (new-unite (third change-tup)))
+             ;(change-tup (change-tuplet-proportion num denom unite))
+             ;(new-num (car change-tup))
+             ;(new-denom (second change-tup))
+             ;(new-unite (third change-tup))
+             )
 
           (setf rep (append rep (list 
                                  (if (= *tuplet-depth* 0)
                                      (list (format nil "o~d" (first *measure-note-positions*))
-				           (format nil "w~d" new-num)
-				           (format nil "q~d" new-denom)
-				           (format nil "c~d" (* new-unite 1024))
+				           (format nil "w~d" num)
+				           (format nil "q~d" denom)
+				           (format nil "c~d" (* unite 1024))
                                            (format nil "T~d" *tuplet-depth*))
                                      (list "?"
-				          (format nil "z~d" new-num)
-				          (format nil "j~d" new-denom)
-				          (format nil "k~d" (* new-unite 1024))
+				          (format nil "z~d" num)
+				          (format nil "j~d" denom)
+				          (format nil "k~d" (* unite 1024))
                                           (format nil "T~d" *tuplet-depth*))
                                   ))))
 
