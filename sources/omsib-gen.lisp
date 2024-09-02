@@ -205,7 +205,9 @@ and the instrument type accepted by Sibelius Manuscript Language."
 
 (defun get-sib-instrument (instrument-name)
 "This function returns a instrument type (Manuscript Language) from a insrument longname (string)." 
-(string-downcase (car (om::list!(gethash (string-downcase instrument-name) *sib-instruments-hash*)))))
+;(string-downcase
+(car (om::list!(gethash (string-downcase instrument-name) *sib-instruments-hash*))))
+;)
 
 (defun print-sib-instruments ()
 (let (instruments)
@@ -770,7 +772,6 @@ res))
              ;(new-denom (second change-tup))
              ;(new-unite (third change-tup))
              )
-
           (setf rep (append rep (list 
                                  (if (= *tuplet-depth* 0)
                                      (list (format nil "o~d" (first *measure-note-positions*))
