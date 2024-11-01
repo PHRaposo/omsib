@@ -12,6 +12,9 @@
 (defvar *sib-comp-on* nil)
 (setf *sib-comp-on* t)
 
+(defvar *grace-type* nil)
+(setf *grace-type* "acciaccatura") ;IN-PROGRESS
+
 (defmethod get-def-vals ((iconID (eql :omsib)))
    (list 
     :sib-dyn-on t
