@@ -5,7 +5,7 @@
 ;;;     2024 - by Paulo Raposo
 ;;;
 ;;;      ADAPTED FROM: OM2Lily 2.0 v1.1
-;;;      © 2005 IRCAM - Karim Haddad
+;;;      Â© 2005 IRCAM - Karim Haddad
 ;;;
 ;;; ====================================================================
 
@@ -481,16 +481,21 @@ and the line style accepted by Sibelius Manuscript Language."
            collect (every #'(lambda (x) (equal (first subl) x)) subl))))))
 
 (defun check-timesigs (voices)
- (let* ((timesigs (om::mat-trans (loop for voice in voices 
+(if (= 1 (length voices))
+    t
+(let ((timesigs (om::mat-trans (loop for voice in voices 
                                   collect (loop for measure in (om::inside voice)
                                                       collect (car (om::tree measure))))))
-       (equal-timesigs? (all-equal? timesigs))
-       (dialog (if (or equal-timesigs? (not (position nil equal-timesigs?)))
-                        t
-                       (om::om-y-or-n-dialog  (format nil "~a~%~a" "WARNING: This library does not support multiple time signatures at the same time." "Do you wish to continue?"))
-                       )))
-(if (null dialog) 
-    (om::om-abort))))
+     test dialog)
+
+(setf test (loop for ts in timesigs
+      collect (apply #'screamer::andv (mapcar #'(lambda (x y) (equal x y)) ts (cdr ts)))))
+(setf dialog 
+      (if (null (position 'nil (om::flat test)))
+           t
+           (om::om-y-or-n-dialog  (format nil "~a~%~a" "WARNING: This library does not support multiple time signatures at the same time." "Do you wish to continue?"))))
+(if (null dialog)
+    (om::om-abort)))))
 
 (defun get-tempos (voice)
  (let* ((tempo (om::tempo voice)))
