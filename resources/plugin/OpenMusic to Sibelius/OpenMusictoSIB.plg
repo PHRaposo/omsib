@@ -1,5 +1,4 @@
-﻿
-{
+﻿{
 	Initialize "() {
 if (Sibelius.ProgramVersion > 20200600) 
 	{
