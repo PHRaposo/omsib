@@ -16,8 +16,7 @@
 	 	      (om-relative-path '("sources") "sib-instruments")
                       (om-relative-path '("sources") "sib-lines")
                       (om-relative-path '("sources") "omsib-preferences")
-                      (om-relative-path '("sources") "parse-number")
-                      (om-relative-path '("sources") "grace-notes")		      
+                      (om-relative-path '("sources") "parse-number")					  
                       (om-relative-path '("sources") "omsib-gen")		 							 
                           ))
 						 

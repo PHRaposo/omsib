@@ -5,7 +5,7 @@
 ;;;     2024 - by Paulo Raposo
 ;;;
 ;;;      ADAPTED FROM: OM2Lily 2.0 v1.1
-;;;      Â© 2005 IRCAM - Karim Haddad
+;;;      © 2005 IRCAM - Karim Haddad
 ;;;
 ;;; ====================================================================
 
@@ -575,7 +575,7 @@ res))
 
 (defun cons-voice-positions-and-durations (voice)
  (let* ((tree (om::tree voice))
-       (ratios (om::flat (om::tree-to-ratios tree)))
+       (ratios (remove 0 (om::flat (om::tree-to-ratios tree)))) ;grace-notes compat. (02.06.2025)
 	   (rests-posn (loop for obj in (om::collect-chords voice)
 		   	             for x from 0 
 						 when (om::rest-p obj)
@@ -600,7 +600,8 @@ res))
 							
 (defun measure-tree-to-ratio (measure)
 "This function returns a list of ratios from a measure object without ties."
-(om::flat (om::tree-to-ratios (list 1 (list (om::tree measure))))))
+(remove 0 ;for OM grace notes compat. (02/06/2025)
+ (om::flat (om::tree-to-ratios (list 1 (list (om::tree measure)))))))
 	
 (defun cons-measure-positions-and-durations (measure)
  (let* ((ratios (om::flat (measure-tree-to-ratio measure)))
@@ -865,10 +866,6 @@ res))
     (values rep val)
 ))
 
-(defun get-extra-grace-notes (liste)
-  (remove 'nil 
-  (loop for i in liste
-        collect (if (om::grace-extra-p i) (om::extra-grace-notes i)))))
 
 (defun get-extra-text (liste)
   (remove 'nil 
@@ -881,23 +878,18 @@ res))
   (loop for i in liste
         collect (if (om::vel-extra-p i) (om::thechar i)))))
 
-(defun get-kant-graces (chord)
-  (remove nil
-  (loop for n in (om::inside chord)
-           when (om::kant-grace-p n)
-          collect (om::midic n))))
+(defun get-graces-new (chord) ;for OM grace notes compat. (02/06/2025)
+  (if (om::gnotes chord)
+      (mapcar 'om::lmidic (om::glist (om::gnotes chord)))))
 
 ;<<<>>>*****<<<|----|>>>*****<<<>>>;
 ;*****<<<>>> CHORD-NOTE <<<>>>*****;
 	 
 (defmethod cons-sib-text ((self om::chord) dur tempo)
-  (let* ((notes (remove-if #'om::kant-grace-p (om::inside self)))
-          (kant-graces  (get-kant-graces self))
+  (let* ((notes (om::inside self))
          (extra (car (mapcar #'om::extra-obj-list notes)))
          (text (get-extra-text extra))
-         (grace (get-extra-grace-notes extra))
-         ;(velex (if (om::vel-extra-p (car extra)) <== not used in omsib
-         ;           (om::thechar (car extra)))) <== not used in omsib
+         (grace (get-graces-new self))
          (durtot (if (listp dur) (car dur) dur))
          (inside (om::inside self))
          (vel (car (om::lvel self)))
@@ -907,7 +899,6 @@ res))
          (sib-dur (pop *measure-note-durations*))
          (tup? *tuplet-note*)
          rep) 
-    ;(print kant-graces) ;<== CHECK KANT GRACE NOTES
     ;(print grace) ;<== CHECK GRACE NOTES
      (setf rep (om::x-append  (if tup? sib-posn (format nil "p~d" sib-posn))
                     (if (= 1 (length notes)) 
@@ -939,14 +930,12 @@ res))
                                              (let ((articulations (remove nil art-num))
                                                     (texts (om::posn-match text (om::member-pos nil art-num))))
                                                (om::x-append  (format nil "a~a" (format nil "~{~A~^ ~}" (loop for num in articulations collect (format nil "~a" num))))
-                                                                        (format nil "K~a" (format nil "~{~A~^ ~}" (loop for tex in texts collect (format nil "~a" (if (technique? tex) (split-tech-text tex) tex)))))))))))
-                      (when grace ;<== NEW (09.09.2024): grace-notes (for quantify) 
+                                                                        (format nil "K~a" (format nil "~{~A~^ ~}" (loop for tex in texts collect (format nil "~a" (if (technique? tex) (split-tech-text tex) tex))))))))))) 
+                       (when grace ;<== NEW (02.06.2025): grace-notes        
                         (loop for g in grace 
                                  collect (if (= 1 (length g))
                             (format nil "G~a" (format nil "~{~A~^ ~}" (om::om/ (om::approx-m  g *approx-midic*) 100)))
                             (format nil "Q~a" (format nil "~{~A~^ ~}" (om::om/ (om::approx-m  g *approx-midic*) 100))))))
-                      (when kant-graces ;<== NEW (11.09.2024): kant-grace-notes (red color)
-                        (loop for g in kant-graces  collect  (format nil "G~a"  (om::om/ (om::approx-m  g *approx-midic*) 100))))
                       ))
 (list rep)
 ))
@@ -956,11 +945,31 @@ res))
 
 (defmethod cons-sib-text ((self om::rest) dur tempo)
  (let ((durtot (if (listp dur) (car dur) dur))
-	 (sib-dur (pop *measure-note-durations*))
- 	(sib-posn (pop *measure-note-positions*))
-        (tup? *tuplet-note*))
-  (declare (ignore sib-dur))
-  (when tup? (list (list sib-posn (* durtot 1024))))))	
+	   (sib-dur (pop *measure-note-durations*))
+ 	   (sib-posn (pop *measure-note-positions*))
+       (tup? *tuplet-note*)
+       (grace (get-graces-new self))
+        rep
+        )
+         ;(declare (ignore sib-dur))
+         ;(when tup? (list (list sib-posn (* durtot 1024))))))
+    (cond ((null grace) ;<== NEW (02.06.2025): grace-notes
+           (declare (ignore sib-dur))
+           (when tup? (list (list sib-posn (* durtot 1024)))))
+     (t (setf rep (om::x-append
+                   (if tup? sib-posn (format nil "p~d" sib-posn))
+                     (format nil "m~d" 0) ; pitch 0 is a place holder inside tuplets
+                     (format nil "d~d" (if tup? (* durtot 1024) sib-dur))
+                     (if tup? "xTrue" "xFalse")
+                     (if tup? (format nil "X~a" (1- *tuplet-depth*)) "XFalse")
+                        (loop for g in grace 
+                                 collect (if (= 1 (length g))
+                            (format nil "G~a" (format nil "~{~A~^ ~}" (om::om/ (om::approx-m  g *approx-midic*) 100)))
+                            (format nil "Q~a" (format nil "~{~A~^ ~}" (om::om/ (om::approx-m  g *approx-midic*) 100)))))
+                     "R ";delete Sibelius NoteRest (05.08.2025)       
+                      ))
+        (list rep)))))
+ 	
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1118,48 +1127,6 @@ Note that this method relies on OM Add-extras that still in development. Only us
  (let ((positions (get-chord-posn-for-lines self chord1 chord2)))
  (mapcar #'(lambda (posn) (om::x-append posn line)) positions)))
 
- ;; EXTRA-GRACE-NOTES
-
- (om::defmethod! add-extra-grace ((self om::voice) 
-                         (liste list) &optional
-                         (positions nil) (modify nil))
-  :initvals (list om::t '(0 1) nil nil) 
-  :indoc '("voice" "list-of-extras" "plc-in-voice")
-  :icon 99
-  :doc "The text list is a list of strings."
- (let* ((clone (om::clone self))
-        (chords (om::collect-chords clone))
-        (flt-chrds 
-         (remove nil
-                 (loop for i in chords
-                       collect (if 
-                                   (and (om::chord-p i)
-                                        (not (om::cont-chord-p i)))
-                                   i))))
-        (posn-chrds (if positions (remove nil (om::posn-match flt-chrds positions))
-                                   flt-chrds))
-      (extras (loop for i in liste
-                    collect (let (deltay)
-                                (make-instance 'om::grace-note-extra 
-                                                          :deltay (if (equal 'up deltay) -8 3)
-                                                          :extra-grace-notes i)))))
-   (loop for chrd in posn-chrds
-         for ext in extras do    
-        (if (om::grace-extra-p ext)
- 	   (om::add-extra-list chrd ext "exact" nil)
-              (loop for e in ext do (om::add-extra-list chrd e "exact" nil))))
-   clone
-   ))
-
- (om::defmethod! add-extra-grace-notes ((self om::voice) (posn-grace list))
-  :initvals (list om::t '((0 1) (2 (4 1))))
-  :indoc '("voice" "positions-and-grace-notes")
-  :icon 99
-  :doc ""
-  (add-extra-grace self
-    (mapcar #'second posn-grace)
-    (mapcar #'first posn-grace)))
-
 ;; UTILS
 
  (om::defmethod! split-voice-by-clef ((self om::voice))
@@ -1304,70 +1271,6 @@ ARGUMENTS:
   :icon 99 
   :doc "This function opens a documentation window containing all available technique texts."
   (print-sib-technique-texts))
-
-;;; QUANT->SIB
-
-(defun ratio2ms (ratios tempo &optional ratio?)
-(if ratio?
- (let* ((whole-note (/ 240000 tempo)))
- (mapcar #'(lambda (x)
-                     (if (zerop x)
-                        1 ;<== subst. zero for 1 milisecond
-                         (floor (coerce x 'double-float))))
-  (om::om* whole-note ratios)))
-(mapcar #'(lambda (x)
-                     (if (zerop x)
-                          1 ;<== subst. zero for 1 milisecond
-                       (floor (coerce x 'double-float)))) 
-   ratios)))
-						
-(om::defmethod! sib-quantify ((durs list) (tempi t) (measures list)
-                       (max/ t)
-                       &optional
-                       forbid
-                       offset
-                       precis
-		pitch)
- :initvals '((1000 1000 1000 1000) 60 (4 4) 8 nil 0 0.5 (6000 6000 6000 6000))
- :icon 99
- :indoc '("durations (list)" "tempi (number or list)" "list of time signature(s)" "maximum subdivision"  "list of forbidden subdivisions" "grace-notes?" "precision (0.0-1.0)" "pitch (list-midics)")
- :doc "See omquantify doc."
-(let* ((n-graces (om::get-n-grace durs tempi measures max/ forbid offset precis))
-        (remove-graces (om::remove-nth durs n-graces))
-        (remove-grace-pitch (om::remove-nth pitch n-graces))
-        (graces-posn (om::om- n-graces (om::arithm-ser 0 (length n-graces) 1)))
-        (graces-pitch (om::posn-match pitch n-graces))
-        (tree (om::omquantify remove-graces tempi measures max/ forbid offset precis))
-        (extras-list (reverse (mapcar #'list graces-posn graces-pitch)))
-        (voice (make-instance 'om::voice :tree tree :chords remove-grace-pitch :tempo tempi)))
-(add-extra-grace-notes voice extras-list)))
-
-(om::defmethod! quant->sib ((durs list) (pitch list) (tempi t) (measures list)
-                        (max/ t)
-                        &optional
-                        forbid
-                        offset
-                        precis
-                        mode
-                        result)
-  :initvals '((1000 1000 1000 1000)  (6000 6000 6000 6000) 60 (4 4) 8 nil 0 0.5 "ms" "export")
-  :icon 99
-  :indoc '("durations (list)"  "pitch (list-midics)" "tempi (number or list)" "list of time signature(s)" "maximum subdivision"  "list of forbidden subdivisions" "grace-notes?" "precision (0.0-1.0)" "miliseconds or ratios" "export to sibelius or voice object")
-  :menuins '((8 (("ms" "ms") ("ratio" "ratio"))) (9 (("export" "export") ("voice" "voice")))) 
-  :doc "See omquantify doc."
-   (handler-bind ((error #'(lambda (c)
-                             (when om::*msg-error-label-on*
-                               (om::om-message-dialog (om::string+ "Error while evaluating the box " "QUANT->SIB" " : " 
-                                                        (om::om-report-condition c) "~&" "PLEASE REPORT THIS BUG.")
-                                                  :size (om::om-make-point 300 200))
-                               (om::om-abort)))))
-(let ((voice (sib-quantify (if (string-equal "ms" mode)
-                                                  (ratio2ms durs tempi nil)
-                                                  (ratio2ms durs tempi t)) 
-                   tempi measures max/ forbid offset precis pitch)))
- (if (string-equal "voice" result)
-      voice
-      (progn (setf *score-title* "VOICE") (om->sib voice))))))
 
 ;;; EOF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
