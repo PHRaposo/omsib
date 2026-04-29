@@ -166,10 +166,10 @@ Custom3Artic = 15"
   and the articulation number."
   (let ((articulations *sib-articulations*))
   (clrhash *sib-articulations-hash*)
-  		 (dolist (a articulations)
-  		  (setf (gethash (first a) *sib-articulations-hash*) 
-  			     (second a)))))
-				 
+         (dolist (a articulations)
+          (setf (gethash (first a) *sib-articulations-hash*) 
+                 (second a)))))
+                 
   (fill-sibelius-articulations-hash)
 
 (defun get-articulation-num (art)
@@ -186,8 +186,8 @@ Custom3Artic = 15"
 
 (defvar *SIB-instruments-file* (namestring
                              (make-pathname :directory (pathname-directory *load-pathname*)
-                                            :name "sib-instruments.lisp")))		  
-	  
+                                            :name "sib-instruments.lisp")))       
+      
 (defvar *sib-instruments-hash* (make-hash-table :test #'equal))
 
 (defun fill-sibelius-instruments-hash ()
@@ -197,10 +197,10 @@ and the instrument type accepted by Sibelius Manuscript Language."
 (with-open-file (in *SIB-instruments-file* :direction :input)
  (setq instruments (eval (read in))))
 (clrhash *sib-instruments-hash*)
-	 (dolist (i instruments)
-	  (setf (gethash (first i) *sib-instruments-hash*) 
-		     (second i)))))
-			 
+     (dolist (i instruments)
+      (setf (gethash (first i) *sib-instruments-hash*) 
+             (second i)))))
+             
 (fill-sibelius-instruments-hash)
 
 (defun get-sib-instrument (instrument-name)
@@ -213,9 +213,9 @@ and the instrument type accepted by Sibelius Manuscript Language."
 (let (instruments)
 (maphash #'(lambda (x y)
            (declare (ignore y))
-		   (setq instruments (if (null instruments) 
-				                 (format nil "~a" x)
-						         (format nil (concatenate 'string instruments "~%~a") x))))
+           (setq instruments (if (null instruments) 
+                                 (format nil "~a" x)
+                                 (format nil (concatenate 'string instruments "~%~a") x))))
 *sib-instruments-hash*)
 (om::om-show-output-lines (format nil "~a" instruments) "INSTRUMENTS")))
 
@@ -233,19 +233,19 @@ a list of list with these two arguments."
 (defun get-user-instrument (prompt &key (initial-string "") owner 
                                  (size (om::om-make-point 600 100))
                                  (position (om::om-make-point 200 140)))
- (declare (ignore owner size position))								 
+ (declare (ignore owner size position))                              
  (om-api::prompt-for-string  prompt :initial-value initial-string :title "Search Instrument"))
-	 
+     
 (defun search-sib-instruments (&optional name)
  (let ((str (if name 
-	 	        (string-downcase name)
-	 	       (string-downcase (get-user-instrument "Type an instrument name:"))))
-	   (found '()))
+                (string-downcase name)
+               (string-downcase (get-user-instrument "Type an instrument name:"))))
+       (found '()))
   (maphash #'(lambda (name id)
               (declare (ignore id))
- 	          (when (search str name) 
-				    (setq found (append (list name) found)) 
-					))
+              (when (search str name) 
+                    (setq found (append (list name) found)) 
+                    ))
   *sib-instruments-hash*)
   found))
 
@@ -264,8 +264,8 @@ a list of list with these two arguments."
 
 (defvar *SIB-lines-file* (namestring
                               (make-pathname :directory (pathname-directory *load-pathname*)
-                                             :name "sib-lines.lisp")))		  
-		  
+                                             :name "sib-lines.lisp")))        
+          
 (defvar *sib-lines-hash* (make-hash-table :test #'equal))
 
 (defun fill-sibelius-lines-hash ()
@@ -275,10 +275,10 @@ and the line style accepted by Sibelius Manuscript Language."
 (with-open-file (in *SIB-lines-file* :direction :input)
   (setq lines (eval (read in))))
 (clrhash *sib-lines-hash*)
-		 (dolist (l lines)
-		  (setf (gethash (first l) *sib-lines-hash*) 
-			     (second l)))))
-				 
+         (dolist (l lines)
+          (setf (gethash (first l) *sib-lines-hash*) 
+                 (second l)))))
+                 
 (fill-sibelius-lines-hash)
 
 (defun get-sib-line (line)
@@ -288,17 +288,17 @@ and the line style accepted by Sibelius Manuscript Language."
 (defun print-sib-lines ()
 (let (lines)
 (maphash #'(lambda (x y) 
-	(declare (ignore y))
-	(setq lines (if (null lines) 
-				(format nil "~a" x)
-				(format nil (concatenate 'string lines "~%~a") x))))
+    (declare (ignore y))
+    (setq lines (if (null lines) 
+                (format nil "~a" x)
+                (format nil (concatenate 'string lines "~%~a") x))))
  *sib-lines-hash*)
 (om::om-show-output-lines (format nil "~a" lines) "LINES")))
 
 (defun get-chord-posn-for-lines (voice chord1 chord2)
 (let* ((chords (remove-if #'om::rest-p (om::collect-chords voice)))
          ;temp-posn
-		 )
+         )
 (om::mat-trans 
  (mapcar #'(lambda (lst)
                  (remove nil lst))
@@ -316,7 +316,7 @@ and the line style accepted by Sibelius Manuscript Language."
                           x))
           into chord2-posn
           finally (return (list chord1-posn chord2-posn)))))))
-			 
+             
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;Utilities;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -448,7 +448,7 @@ and the line style accepted by Sibelius Manuscript Language."
   (setf *score-title* (om::name (om::associated-box voice)))
   (when (> *approx-midic* 4) (setf *approx-midic* 4))
   (loop for elt in (cons-sib-text voice (list "unnamed (treble staff)" nil nil) (list articulations lines)) do (print elt)))
-												
+                                                
 ;;;for extras
 ;(defun massq (item list)
 ;(format nil "~S" (cdr (assoc item list :test 'equal))))  
@@ -466,8 +466,8 @@ and the line style accepted by Sibelius Manuscript Language."
  (massq item *chars-for-extras*))
 
 (defmethod get-number-of-measures ((object om::voice))
- (length (om::inside object)))	
-	 
+ (length (om::inside object)))  
+     
 (defmethod get-number-of-measures ((object om::poly))
   (mapcar #'get-number-of-measures (om::inside object)))
 
@@ -501,10 +501,10 @@ and the line style accepted by Sibelius Manuscript Language."
  (let* ((tempo (om::tempo voice)))
   (if (second tempo)
       (append (list (second (car tempo)))
-	          (loop for el in (second tempo)
+              (loop for el in (second tempo)
                     collect (second (cadr el))))
       (second (car tempo)))))
-				  
+                  
 (defun check-tempos (voices)
  (let* ((tempos (mapcar #'get-tempos voices))
         (equal-tempos? (mapcar #'equal tempos (cdr tempos)))
@@ -532,7 +532,7 @@ and the line style accepted by Sibelius Manuscript Language."
                     res)))    
 res))
  
-	 
+     
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -546,20 +546,20 @@ res))
   (let ((rep '())
         (voices (om::inside self))
         (articulations-lines (om::mat-trans articulations-lines))
-		)
+        )
 (unless *score-title*
  (setf *score-title* (if (= 1 (length voices)) 
-	 	                (om::name (om::associated-box (car voices)))
+                        (om::name (om::associated-box (car voices)))
                                 (om::name (om::associated-box self)))))
-	  
+      
   (unless (= 1 (length voices))
-	      (progn (check-tempos voices)
-		         (check-timesigs voices)))
+          (progn (check-tempos voices)
+                 (check-timesigs voices)))
   
   (get-def-midic-approx)
 
   (when (> *approx-midic* 4) (setf *approx-midic* 4))
-   		 
+         
   (setf *score-number-of-measures* (om::list-max (get-number-of-measures self)))
   
     (setf *voice-num* 0)
@@ -576,11 +576,11 @@ res))
 (defun cons-voice-positions-and-durations (voice)
  (let* ((tree (om::tree voice))
        (ratios (remove 0 (om::flat (om::tree-to-ratios tree)))) ;grace-notes compat. (02.06.2025)
-	   (rests-posn (loop for obj in (om::collect-chords voice)
-		   	             for x from 0 
-						 when (om::rest-p obj)
-						 collect x))
-	(sibelius-durs (om::om* ratios 1024))
+       (rests-posn (loop for obj in (om::collect-chords voice)
+                         for x from 0 
+                         when (om::rest-p obj)
+                         collect x))
+    (sibelius-durs (om::om* ratios 1024))
        (onsets (butlast (om::dx->x 0 (om::om-abs ratios))))
        (sibelius-positions (om::om* onsets 1024)))
  (progn (setf *voice-note-positions* (om::remove-nth sibelius-positions rests-posn))
@@ -597,15 +597,15 @@ res))
                   (list (format nil "P~a" (round line-posn))
                         (format nil "D~a" (round line-dur))
                         (format nil "L~a" (get-sib-line (third line))))))))
-							
+                            
 (defun measure-tree-to-ratio (measure)
 "This function returns a list of ratios from a measure object without ties."
 (remove 0 ;for OM grace notes compat. (02/06/2025)
  (om::flat (om::tree-to-ratios (list 1 (list (om::tree measure)))))))
-	
+    
 (defun cons-measure-positions-and-durations (measure)
  (let* ((ratios (om::flat (measure-tree-to-ratio measure)))
-	   (sibelius-durs (om::om* ratios 1024))
+       (sibelius-durs (om::om* ratios 1024))
        (onsets (butlast (om::dx->x 0 (om::om-abs ratios))))
        (sibelius-positions (om::om* onsets 1024)))
  (progn 
@@ -614,60 +614,65 @@ res))
 
 ;<<<>>>*****<<<|>>>*****<<<>>>;
 ;*****<<<>>> VOICE <<<>>>*****;
-	   
+       
 (defmethod cons-sib-text ((self om::voice) instrument articulations-lines)
   (setf *mesure-num* 0)
   (setf *tempdyn* nil)
   (let* ((rep '())
          (art (if (first articulations-lines)
-		 	      (loop for a in (first articulations-lines)
+                  (loop for a in (first articulations-lines)
                         collect (if (listp (second a)) 
-							        (om::subs-posn a '(1) (format nil "~{~A~^ ~}" 
-											               (loop for num in (second a) 
-											                        collect (if (numberp num)
-										                                               (artnum->str num)
-														                num))))
-							        (om::subs-posn a '(1) (if (numberp (second a)) 
-											               (artnum->str (second a))
-												       (second a)))))))
+                                    (om::subs-posn a '(1) (format nil "~{~A~^ ~}" 
+                                                           (loop for num in (second a) 
+                                                                    collect (if (numberp num)
+                                                                                       (artnum->str num)
+                                                                        num))))
+                                    (om::subs-posn a '(1) (if (numberp (second a)) 
+                                                           (artnum->str (second a))
+                                                       (second a)))))))
         (new-self (if art (add-extra-text self (mapcar #'second art) (mapcar #'first art))
-			               self)) 
+                           self)) 
         (mesures (om::inside new-self))
         (inst (cond ((null instrument)
-			    (list (get-sib-instrument "unnamed (treble staff)") nil nil))
-					 
-			   ((and (stringp (first instrument))
-				     (equal (get-sib-instrument (first instrument)) "nil"))
+                (list (get-sib-instrument "unnamed (treble staff)") nil nil))
+                     
+               ((and (stringp (first instrument))
+                     (equal (get-sib-instrument (first instrument)) "nil"))
                           (progn (om::om-message-dialog (format nil "~A is not a valid Sibelius instrument for voice number ~d.~%Instrument set to unnamed treble staff." (first instrument) *voice-num*)) 
                           (list (get-sib-instrument "unnamed (treble staff)") nil nil)))
-						   
-			 (t (list-sib-instruments instrument))))
+                           
+             (t (list-sib-instruments instrument))))
 
-		(lin (second articulations-lines))
+        (lin (second articulations-lines))
         (lastmes nil))
-	  (cons-voice-positions-and-durations self)	
+      (cons-voice-positions-and-durations self) 
 
       (setf rep (append rep  (list (format nil "i~a" (first inst))
-       			 			(if (second inst) (format nil "l~a" (second inst)) "l ")
-        					(if (third inst) (format nil "s~a" (third inst)) "s "))))
-												
+                            (if (second inst) (format nil "l~a" (second inst)) "l ")
+                            (if (third inst) (format nil "s~a" (third inst)) "s "))))
+                                                
 (cond ((= 1 *voice-num*)
           (setf *mem-mes* nil)
           (loop for mes in mesures
-                for i = 1 then (+ i 1) do				            
+                for i = 1 then (+ i 1) do                           
                 (setf *mesure-num* (incf *mesure-num*))
-		(if (and (> *score-number-of-measures* 5) (= *mesure-num* 1))
+        (if (and (> *score-number-of-measures* 5) (= *mesure-num* 1))
                     (setf rep (append rep (list (format nil "B~d" (- *score-number-of-measures* 5))))))
-                (setf rep (append rep (list (if (string-equal "acciaccatura" om::*grace-type*) "ATrue" "AFalse"))))	
+                (setf rep (append rep (list (if (string-equal "acciaccatura" om::*grace-type*) "ATrue" "AFalse")))) 
                 (setf rep (append rep (list (format nil "b~d" *mesure-num*))))
-                (let ((tempo (if (atom (om::qtempo mes)) 
-                                 (om::qtempo mes)
-                                 (cadar (om::qtempo mes))))
+                (let ((tempo (if (atom (om::tempo mes)) ;(om::qtempo mes)) 
+                                 (om::tempo mes);(om::qtempo mes)
+                                 (cadar (om::tempo mes)))) ;(cadar (om::qtempo mes))))
+                       (unit (if (atom (om::tempo mes))
+                                  1/4
+                                 (caar (om::tempo mes))))
                         )
                   ;(print tempo) ;;this is to check the tempo....
                   (if (not (equal tempo *mem-mes*))
                       (progn (setf *mem-mes* tempo) 
-                                  (setf tempo (list (format nil "u~a" 256) (format nil "e~a" tempo))))
+                                  (setf tempo (list (format nil "u~a" (* unit 1024))
+                                                                       ;256) 
+                                                    (format nil "e~a" tempo))))
                       (setf tempo nil))
                 (setf rep (append rep (cons-sib-text mes lastmes tempo)))
                 (setf lastmes mes)
@@ -677,16 +682,16 @@ res))
             for i = 1 then (+ i 1) do
             (setf *mesure-num* (incf *mesure-num*))
             (setf rep (append rep (list (format nil "b~d" *mesure-num*))))
-            (setf rep (append rep (cons-sib-text mes lastmes nil)))			
+            (setf rep (append rep (cons-sib-text mes lastmes nil)))         
             (setf lastmes mes))
       ))
     
 (setf rep (append rep (format-lines *voice-note-positions* lin)))
 
  (if *score-number-of-measures*
-	 (progn (setf *score-number-of-measures* nil)
+     (progn (setf *score-number-of-measures* nil)
              rep)
-	 rep)))
+     rep)))
 
 ;symb-beat-val= For a key signature equivalent to 3//3 will be the half note (blanche)
 ;real-beat-val= For the same key sign, this will be the halfnote of a triplet (blanche de triolet)
@@ -707,12 +712,12 @@ res))
 
   ;(print tempo) ;;this is to check the tempo....
     (setf rep (if tempo 
-			     (list (format nil "S~d" *mesure-num*) tempo)
+                 (list (format nil "S~d" *mesure-num*) tempo)
                  (list (format nil "S~d" *mesure-num*))))
-				 
+                 
     (unless (and lastmes (equal (first tree) (first (om::tree lastmes))) (= *voice-num* 1))
       (setf rep (append rep (list (format nil "g~a" (om::fnumerator (first tree)))
-                                               (format nil "f~a" (om::fdenominator (first tree)))))))	  
+                                               (format nil "f~a" (om::fdenominator (first tree)))))))     
     (loop for obj in inside do
           (setf rep (append rep 
                             (let* ((dur-obj-noire (/ (om::extent obj) (om::qvalue obj)))
@@ -729,9 +734,9 @@ res))
 
 (defun get-sibnote-durs (list)
  (loop for el in list
-	  when (not (every #'stringp el))	 
-	  collect (if (= (length el) 2)
-	              (second el)
+      when (not (every #'stringp el))    
+      collect (if (= (length el) 2)
+                  (second el)
                       (parse-number::parse-number (subseq (third el) 1)))))
 
 #|(defun change-tuplet-proportion (num denom unite)
@@ -782,14 +787,14 @@ res))
           (setf rep (append rep (list 
                                  (if (= *tuplet-depth* 0)
                                      (list (format nil "o~d" (first *measure-note-positions*))
-				           (format nil "w~d" num)
-				           (format nil "q~d" denom)
-				           (format nil "c~d" (* unite 1024))
+                           (format nil "w~d" num)
+                           (format nil "q~d" denom)
+                           (format nil "c~d" (* unite 1024))
                                            (format nil "T~d" *tuplet-depth*))
                                      (list "?"
-				          (format nil "z~d" num)
-				          (format nil "j~d" denom)
-				          (format nil "k~d" (* unite 1024))
+                          (format nil "z~d" num)
+                          (format nil "j~d" denom)
+                          (format nil "k~d" (* unite 1024))
                                           (format nil "T~d" *tuplet-depth*))
                                   ))))
 
@@ -800,7 +805,7 @@ res))
               (setf rep (append rep (let* ((operation (/ (/ (om::extent obj) (om::qvalue obj)) 
                                                          (/ (om::extent self) (om::qvalue self))))
                                            (dur-obj (numerator operation))
-                                            exp tmp)					  
+                                            exp tmp)                      
                                       (setf dur-obj (* dur-obj (/ num (denominator operation))))
                                       (setf tmp (multiple-value-list 
                                                  (cons-sib-text obj (list (* dur-obj unite) cpt) nil)))
@@ -833,7 +838,7 @@ res))
                                                          collect (let* ((operation (/ (/ (om::extent obj) (om::qvalue obj)) 
                                                                                       (/ (om::extent self) (om::qvalue self))))
                                                                         (dur-obj (numerator operation))
-								        )
+                                        )
                                                                   (setf dur-obj (* dur-obj (/ num (denominator operation))))
                                                                   (* dur-obj unite)))))))  
               (tuplet-positions (mapcar #'first rep))
@@ -884,7 +889,7 @@ res))
 
 ;<<<>>>*****<<<|----|>>>*****<<<>>>;
 ;*****<<<>>> CHORD-NOTE <<<>>>*****;
-	 
+     
 (defmethod cons-sib-text ((self om::chord) dur tempo)
   (let* ((notes (om::inside self))
          (extra (car (mapcar #'om::extra-obj-list notes)))
@@ -922,10 +927,10 @@ res))
                                (format nil "v~a" dyn)))
                       (when text 
                               (let* ((art-num (mapcar #'get-articulation-num text)))
-				 (cond ((every #'numberp art-num) ; <== only articulations
+                 (cond ((every #'numberp art-num) ; <== only articulations
                                             (format nil "a~a" (format nil "~{~A~^ ~}" (loop for num in art-num collect (format nil "~a" num)))))
                                            ((every #'null art-num) ;<== only texts 
-				            (format nil "K~a" (format nil "~{~A~^ ~}" (loop for tex in text collect (format nil "~a" (if (technique? tex) (split-tech-text tex) tex))))))
+                            (format nil "K~a" (format nil "~{~A~^ ~}" (loop for tex in text collect (format nil "~a" (if (technique? tex) (split-tech-text tex) tex))))))
                                            (t ; <== mixed 
                                              (let ((articulations (remove nil art-num))
                                                     (texts (om::posn-match text (om::member-pos nil art-num))))
@@ -945,8 +950,8 @@ res))
 
 (defmethod cons-sib-text ((self om::rest) dur tempo)
  (let ((durtot (if (listp dur) (car dur) dur))
-	   (sib-dur (pop *measure-note-durations*))
- 	   (sib-posn (pop *measure-note-positions*))
+       (sib-dur (pop *measure-note-durations*))
+       (sib-posn (pop *measure-note-positions*))
        (tup? *tuplet-note*)
        (grace (get-graces-new self))
         rep
@@ -969,11 +974,11 @@ res))
                      "R ";delete Sibelius NoteRest (05.08.2025)       
                       ))
         (list rep)))))
- 	
+    
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	  
+      
 ;;;;;;;;;;;;;;;;;;;;
 ;;; OM-INTERFACE ;;;
 ;;;;;;;;;;;;;;;;;;;;
@@ -1001,28 +1006,28 @@ res))
        (extras (loop for i in liste
                      collect (let* ((art (om::split-sequence " " i))
                                          ;(stem-up? (if (equal om::*chord-stem-dir* "up") t nil)) 
-				        (init-deltay 1) ;(if stem-up? 1 -3))
-				        )
-				           (if (= (length art) 1)
-				  	           (make-instance 'om::text-extra
-					  	                      :deltax -0.1
+                        (init-deltay 1) ;(if stem-up? 1 -3))
+                        )
+                           (if (= (length art) 1)
+                               (make-instance 'om::text-extra
+                                              :deltax -0.1
                                                  :deltay init-deltay
                                                  :thetext (car art))
-								(loop for a in art 
-									  for x from 0 by 1.5
-									  collect (make-instance 'om::text-extra
-					  	                      :deltax -0.1
+                                (loop for a in art 
+                                      for x from 0 by 1.5
+                                      collect (make-instance 'om::text-extra
+                                              :deltax -0.1
                                                  :deltay (+ init-deltay x) ;(if stem-up? (+ init-deltay x) (- init-deltay x))
                                                  :thetext a)))))))
   (loop for chrd in posn-chrds
         for ext in extras do    
        (if (om::text-extra-p ext)
-	   (om::add-extra-list chrd ext "exact" nil)
+       (om::add-extra-list chrd ext "exact" nil)
              (loop for e in ext do (om::add-extra-list chrd e "exact" nil))))
   clone
   ))
 
-		
+        
 (om::defmethod! add-extra-vel ((self om::voice) &optional (modify nil))
  :initvals (list om::t nil) 
  :indoc '("voice" nil)
@@ -1042,22 +1047,22 @@ res))
                                  i))))
     (liste (loop for chord in flt-chrds collect (om::get-dyn-from-vel (car (om::lvel chord)))))
       (extras (loop for i in liste
-                    collect (let ((deltax (cond ((equal i :p) 0) 	
- 					 	                      ((or (equal i :pp) (equal i :f) (equal i :mf)) -0.1)
- 											  ((equal i :ff) -0.2)												  
-											  ((or (equal i :ppp) (equal i :fff)) -0.3)
-											  (t 0))))						 
-				          (make-instance 'om::vel-extra
-				  	                      :deltax deltax
+                    collect (let ((deltax (cond ((equal i :p) 0)    
+                                              ((or (equal i :pp) (equal i :f) (equal i :mf)) -0.1)
+                                              ((equal i :ff) -0.2)                                                
+                                              ((or (equal i :ppp) (equal i :fff)) -0.3)
+                                              (t 0))))                       
+                          (make-instance 'om::vel-extra
+                                          :deltax deltax
                                             :deltay 1.5
                                             :dynamics i)))))
  (loop for chrd in flt-chrds 
        for ext in extras
        do (let ((dynamics (om::dynamics ext)))
-		(when (not (equal dynamics *tempdyn*))
-			   (progn (om::add-extra-list chrd ext "exact" nil)
-	   				    (setf *tempdyn* dynamics))		 
-						 )))				
+        (when (not (equal dynamics *tempdyn*))
+               (progn (om::add-extra-list chrd ext "exact" nil)
+                        (setf *tempdyn* dynamics))       
+                         )))                
  (progn (setf *tempdyn* nil)
   clone)
  ))
@@ -1082,27 +1087,27 @@ res))
                      flt-chrds))
        (extras (loop for i in liste
                      collect (let ((char (om::split-sequence " " i))
-				                 ;(stem-up? ===> [???????])
-				  		         ;(init-deltay (if stem-up? 1 -3))
-				  		         )
-				           (if (= (length char) 1)
+                                 ;(stem-up? ===> [???????])
+                                 ;(init-deltay (if stem-up? 1 -3))
+                                 )
+                           (if (= (length char) 1)
                                                     (extra-char-or-text (car char))
-				  	           ;(make-instance 'om::char-extra
-					  	   ;                   :deltax -0.1
+                               ;(make-instance 'om::char-extra
+                           ;                   :deltax -0.1
                                                    ;:deltay 1 ;init-deltay
                                                    ;:thechar (get-char-extra-from-string (car char))
-						(loop for ch in char 
-							 for x from 0 by 1.5
-							 collect (extra-char-or-text ch (1+ x))))))))
+                        (loop for ch in char 
+                             for x from 0 by 1.5
+                             collect (extra-char-or-text ch (1+ x))))))))
                                                                         ;(make-instance 'om::char-extra
-					  	                         ;:deltax -0.1
+                                                 ;:deltax -0.1
                                                                          ;:deltay (1+ x) ;(if stem-up? (+ init-deltay x) (- init-deltay x))
                                                                          ;:thechar (get-char-extra-from-string ch)))))))))
   (loop for chrd in posn-chrds
         for ext in extras
         do (if (or (om::char-extra-p ext) (om::text-extra-p ext))
-	 	    (om::add-extra-list chrd ext "exact" nil)
-			(loop for e in ext do (om::add-extra-list chrd e "exact" nil))))
+            (om::add-extra-list chrd ext "exact" nil)
+            (loop for e in ext do (om::add-extra-list chrd e "exact" nil))))
   clone
   ))
 
@@ -1113,12 +1118,12 @@ res))
  :doc "Adds articulations to a voice object.
 Note that this method relies on OM Add-extras that still in development. Only useful for preview the final result of the score."
  (add-extra-text self (mapcar #'(lambda (x) (if (listp x) 
-							                (format nil "~{~A~^ ~}" (loop for num in x collect (artnum->str num)))
-							                (artnum->str x))) 
+                                            (format nil "~{~A~^ ~}" (loop for num in x collect (artnum->str num)))
+                                            (artnum->str x))) 
                                 (mapcar #'second posn-art))
 
                                 (mapcar #'first posn-art)))
-								
+                                
 (om::defmethod! mk-line ((self om::voice) (chord1 list) (chord2 list) (line string))
  :initvals '( nil (9900) (9800) "Slur above")
  :indoc '("voice or poly" "list" "list" "string")
